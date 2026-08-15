@@ -16,7 +16,7 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 .screen{display:none;min-height:100dvh;flex-direction:column}.screen.active{display:flex}
 .header{text-align:center;padding-top:14px}.header h1{font-size:14px;letter-spacing:6px;color:#444;margin:0}
 .slots{display:flex;gap:10px;margin:24px 0 10px}.slot{flex:1;min-width:0;text-align:center}.label{font-size:10px;font-weight:800;letter-spacing:2px;opacity:.7;margin-bottom:6px}
-.box{height:90px;border:2px solid;border-radius:12px;background:var(--surface);display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden;position:relative;cursor:pointer;transition:.25s}.box.locked:after{content:"";position:absolute;z-index:1;inset:-2px;background:repeating-linear-gradient(0deg,#24242c 0,#24242c 8px,#2d2d36 8px,#2d2d36 10px);transform:translateY(0);animation:shutter .16s ease-out;border-radius:10px}.box.locked:before{content:"●";position:absolute;z-index:2;right:8px;top:6px;font-size:8px;color:#777}@keyframes shutter{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+.box{height:90px;border:2px solid;border-radius:12px;background:var(--surface);display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden;position:relative;cursor:pointer;transition:.25s}.box.shuttered:after{content:"";position:absolute;z-index:5;inset:-3px;background:#202027;transform:translateY(0);animation:shutter .18s ease-out;border-radius:12px}.box.shuttered:before{content:"";position:absolute;z-index:6;left:-3px;right:-3px;top:50%;height:2px;background:#2b2b33;box-shadow:0 -22px 0 #2b2b33,0 22px 0 #2b2b33}@keyframes shutter{from{transform:translateY(-105%)}to{transform:translateY(0)}}to{transform:translateY(0)}}
 .val{font-size:24px;font-weight:900;line-height:1.15}.hold{margin-top:6px;padding:4px 9px;border-radius:6px;border:1px solid #252535;background:transparent;color:#444;font-size:9px;font-weight:900;letter-spacing:2px}
 .meaning{min-height:34px;text-align:center;color:#00e5ff80;font-size:12px}.meaning span{display:inline-block;background:#00e5ff08;padding:8px 12px;border-radius:8px}
 .spacer{flex:1}
@@ -45,9 +45,9 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 <section id="slotScreen" class="screen active">
 <div class="header"><h1>IDEA SLOT</h1></div>
 <div class="slots">
-  <div class="slot"><div class="label" id="lab2" style="color:var(--gold)">PERSON</div><div class="box" id="box2" onclick="toggleHold(2)" style="border-color:#ffd93d40"><div class="val" id="v2">—</div></div><button class="hold" id="h2" onclick="toggleHold(2)">HOLD</button><br><button class="custom-toggle" onclick="toggleCustom(2)">+ PERSON</button></div>
-  <div class="slot"><div class="label" id="lab0" style="color:var(--cyan)">WORD</div><div class="box" id="box0" onclick="toggleHold(0)" style="border-color:#00e5ff40"><div class="val" id="v0">—</div></div><button class="hold" id="h0" onclick="toggleHold(0)">HOLD</button><br><button class="custom-toggle" onclick="toggleCustom(0)">+ WORD</button></div>
-  <div class="slot"><div class="label" id="lab1" style="color:var(--pink)">EMOTION</div><div class="box" id="box1" onclick="toggleHold(1)" style="border-color:#ff6b9d40"><div class="val" id="v1">—</div></div><button class="hold" id="h1" onclick="toggleHold(1)">HOLD</button><br><button class="custom-toggle" onclick="toggleCustom(1)">+ EMOTION</button></div>
+  <div class="slot"><div class="label" id="lab2" style="color:var(--gold)">PERSON</div><div class="box" id="box2" onclick="toggleShutter(2)" style="border-color:#ffd93d40"><div class="val" id="v2">—</div></div><button class="hold" id="h2" onclick="toggleHold(2)">HOLD</button><br><button class="custom-toggle" onclick="toggleCustom(2)">+ PERSON</button></div>
+  <div class="slot"><div class="label" id="lab0" style="color:var(--cyan)">WORD</div><div class="box" id="box0" onclick="toggleShutter(0)" style="border-color:#00e5ff40"><div class="val" id="v0">—</div></div><button class="hold" id="h0" onclick="toggleHold(0)">HOLD</button><br><button class="custom-toggle" onclick="toggleCustom(0)">+ WORD</button></div>
+  <div class="slot"><div class="label" id="lab1" style="color:var(--pink)">EMOTION</div><div class="box" id="box1" onclick="toggleShutter(1)" style="border-color:#ff6b9d40"><div class="val" id="v1">—</div></div><button class="hold" id="h1" onclick="toggleHold(1)">HOLD</button><br><button class="custom-toggle" onclick="toggleCustom(1)">+ EMOTION</button></div>
 </div>
 <div id="custom" class="custom"><input id="cw" placeholder="追加する内容"><input id="cm" placeholder="意味・背景メモ（任意）"><button id="customAddBtn" onclick="addCustom()">ADD & HOLD</button></div>
 <div class="meaning" id="meaning"></div>
@@ -88,7 +88,7 @@ let customEmotions=JSON.parse(localStorage.getItem("idea-slot:custom-emotions")|
 let customPeople=JSON.parse(localStorage.getItem("idea-slot:custom-people")||"[]");
 let customType=0;
 let saved=JSON.parse(localStorage.getItem("idea-slot:stocks")||"[]");
-let slots=[null,null,null],held=[false,false,false],busy=false,editId=null;
+let slots=[null,null,null],held=[false,false,false],shuttered=[false,false,false],busy=false,editId=null;
 let aiIdea="",keptIdea="",previousIdeas=[];
 
 const words=()=>[...BASE_WORDS,...custom];
@@ -105,7 +105,7 @@ function render(){
    const v=document.getElementById("v"+i),b=document.getElementById("box"+i),h=document.getElementById("h"+i),l=document.getElementById("lab"+i);
    v.textContent=val(i);v.style.fontSize=val(i).length>5?"18px":"24px";
    b.style.borderColor=held[i]?C[i]:C[i]+"40";b.style.boxShadow=held[i]?`0 0 16px ${C[i]}30`:"none";
-   l.innerHTML=(held[i]?"● ":"")+["WORD","EMOTION","PERSON"][i];h.disabled=!slots[i]||busy;h.textContent="HOLD";h.style.color=held[i]?C[i]:"#444";b.classList.toggle("locked",held[i]);
+   l.innerHTML=(held[i]?"● ":"")+["WORD","EMOTION","PERSON"][i];h.disabled=!slots[i]||busy;h.textContent="HOLD";h.style.color=held[i]?C[i]:"#444";b.classList.toggle("shuttered",shuttered[i]);
  }
  const notes=[];if(slotMemo(2))notes.push(`PERSON：${escapeText(slotMemo(2))}`);if(slotMemo(0))notes.push(`WORD：${escapeText(slotMemo(0))}`);if(slotMemo(1))notes.push(`EMOTION：${escapeText(slotMemo(1))}`);document.getElementById("meaning").innerHTML=notes.length?`<span>${notes.join("　/　")}</span>`:"";
  const all=held.every(Boolean);
@@ -118,6 +118,7 @@ function render(){
  renderAI();
 }
 function toggleHold(i){if(slots[i]){held[i]=!held[i];render()}}
+function toggleShutter(i){if(slots[i]&&!busy){shuttered[i]=!shuttered[i];render()}}
 function invalidateAI(){aiIdea="";keptIdea="";previousIdeas=[];renderAI()}
 async function spin(){
  if(busy||held.every(Boolean))return;busy=true;invalidateAI();render();
@@ -132,7 +133,7 @@ async function spin(){
  slots=targets;busy=false;render();
 }
 function wait(ms){return new Promise(r=>setTimeout(r,ms))}
-function resetSlots(){slots=[null,null,null];held=[false,false,false];invalidateAI();render()}
+function resetSlots(){slots=[null,null,null];held=[false,false,false];shuttered=[false,false,false];invalidateAI();render()}
 function toggleCustom(type){
  customType=type;
  const panel=document.getElementById("custom");
@@ -161,54 +162,62 @@ function addCustom(){
    後でこの関数だけ、Cloudflare Worker / Vercel Function等の安全なAPIへ差し替える。 */
 async function generatePlot(p){
  await wait(500);
- const meaning=(p.meaning||p.word).trim();
- const personMemo=(p.personMemo||"").trim();
- const emotionMemo=(p.emotionMemo||"").trim();
 
- // WORDを「単なる飾り」ではなく、意味から物語のルールへ変換する。
- const ruleSeeds=[
-   `「${p.word}」――つまり「${meaning}」が、法律で数値化される`,
-   `「${p.word}」の意味である「${meaning}」が、本当に身体現象として起きる`,
-   `人の「${p.word}」をAIが検知し、本人より先に行動する`,
-   `「${p.word}」を他人へ譲渡・売買できるサービスが普及する`,
-   `「${p.word}」を一度使うたび、別の何かを失う仕組みがある`,
-   `社会から「${p.word}」という言葉だけが消え、現象だけが残る`,
-   `「${p.word}」の度合いが全員の頭上に表示される`,
-   `「${p.word}」を禁止した結果、別の形で「${meaning}」が噴き出す`
+ const wordNote = p.wordNote || p.meaning || "";
+ const emotionNote = p.emotionNote || "";
+ const personNote = p.personNote || "";
+
+ const variations=[
+  {
+   idea:`${p.word}を、単なる言葉ではなく「社会のルール」や「身体に起きる現象」として扱う。${p.person}はそのルールの外側に置かれ、${p.emotion}が読後に残るようにする。`,
+   opening:`${p.person}の日常で、${p.word}に関する小さな異常が起きる。本人には大したことではないように見えるが、周囲の反応だけが妙に大きい。`,
+   payoff:`途中で、${p.word}の意味が最初に想像していたものとは別物だったと分かる。${wordNote ? `「${wordNote}」という意味や背景を別角度から使い、` : ""}${p.person}の立場と結びつけて、冒頭の違和感を回収する。`,
+   ending:`最後は、問題が解決したように見えた直後に、${p.emotion}の意味だけが反転して残る。`
+  },
+  {
+   idea:`${p.person}が「${p.word}」を仕事・商売・サービスとして扱う世界にする。便利さではなく、その言葉を売買できること自体の妙さを核にする。`,
+   opening:`${p.person}の店には「${p.word}、預かります」とだけ書かれている。最初の客は冗談半分で入ってくる。`,
+   payoff:`客が増えるほど、${p.word}を手放した人たちの日常が少しずつ変わる。${emotionNote ? `「${emotionNote}」という補助メモも感情の背景に使い、` : ""}やがて店主自身が、その代価を受け取っていたことが分かる。`,
+   ending:`返してほしいと言われたとき、店主はもう「${p.word}」が何だったのか説明できない。`
+  },
+  {
+   idea:`${p.word}を“見える／見えない”の問題に変える。${p.person}だけがそれを認識できない、または逆に一人だけ見えてしまう設定にする。`,
+   opening:`朝、${p.person}は周囲が当然のように口にする「${p.word}」だけが分からなくなっていることに気づく。`,
+   payoff:`消えたのは言葉ではなく、人々の共通認識だったと判明する。${personNote ? `「${personNote}」という人物メモを立場の違いとして効かせ、` : ""}主人公だけが以前の意味を覚えていた理由が見えてくる。`,
+   ending:`最後に主人公自身の名前も、同じ仕組みで別の意味に置き換わる。`
+  },
+  {
+   idea:`${p.word}を、世代や時代で意味が変わる言葉として扱う。${p.person}が古い意味を信じていることで、周囲とのズレを物語にする。`,
+   opening:`${p.person}が何気なく「${p.word}」と言う。周囲が一斉に黙る。本人だけが、なぜ空気が変わったのか分からない。`,
+   payoff:`調べるほど、同じ言葉なのに世代ごとに意味が違っていたと分かる。冒頭の会話は間違いではなく、誰も同じ意味で聞いていなかっただけだった。`,
+   ending:`最後にいちばん若い人物が「それ、もう別の意味ですよ」と言い、${p.emotion}だけが残る。`
+  },
+  {
+   idea:`${p.word}を、制度ではなく個人的な癖・習慣・記憶として扱う。${p.person}の小さな行動が周囲へ連鎖し、本人の意図とは別の価値を生む話にする。`,
+   opening:`${p.person}は毎日、誰にも頼まれていないのに${p.word}に関係する行動を続けている。周囲は少し呆れている。`,
+   payoff:`その行動を真似する人が少しずつ増え、本人には見えていなかった影響が広がっていく。${wordNote ? `「${wordNote}」という語の背景が、最後に別の意味で効いてくる。` : ""}`,
+   ending:`本人だけは何も成し遂げたつもりがなく、いつも通り同じことを続けている。`
+  }
  ];
- const situations=[
-   `仕事中`, `家族との何気ない夕食で`, `病院の待合室で`, `学校の帰り道に`,
-   `役所の窓口で`, `SNSを眺めている最中に`, `葬式の朝に`, `デートの途中で`,
-   `いつもの通勤中に`, `誕生日の夜に`
- ];
- const turns=[
-   `本人は被害者だと思っていたが、実はその仕組みを望んだ最初の一人だった`,
-   `異常なのは主人公ではなく、正常に見えていた周囲のほうだった`,
-   `失われていたのではなく、誰かが主人公の分まで引き受けていた`,
-   `便利さの代償だと思われたものが、実は人間を守る最後の安全装置だった`,
-   `最後に同じ出来事がもう一度起き、冒頭の言葉の意味だけが反転する`,
-   `主人公が解決した瞬間、それまで困っていた状態のほうが幸福だったと分かる`,
-   `その感情は主人公自身のものではなく、未来の本人から送られていた`,
-   `ルールを破った主人公だけが、初めて本来の「${p.word}」を体験する`
- ];
- const endings=[
-   `笑えるほど小さな日常の一言で終える`, `静かな一文で余韻を残す`,
-   `冒頭と同じ場面に戻して意味を反転させる`, `読者だけが真相に気づく形で切る`,
-   `主人公の選択は正しかったのか判断を残して終える`
- ];
- const choose=a=>a[Math.floor(Math.random()*a.length)];
- const role=personMemo?`（人物メモ：${personMemo}）`:"";
- const emo=emotionMemo?`${p.emotion}（${emotionMemo}）`:p.emotion;
- const rule=choose(ruleSeeds), situation=choose(situations), turn=choose(turns), ending=choose(endings);
- const variants=[
-   `【核】${rule}世界。\n${p.person}${role}は${situation}、自分だけそのルールから外れていることに気づく。最初は${emo}を感じるが、調べるほど「${meaning}」という本来の意味と、社会が使う「${p.word}」の意味がずれていると分かる。\n【反転】${turns[Math.floor(Math.random()*turns.length)]}。\n【ラスト】${ending}。`,
-   `【着想】${p.word}＝「${meaning}」を、そのまま未来の技術にする。${p.person}${role}の生活では、${rule}。\nある日、${situation}その判定だけが逆転する。${emo}から始まり、主人公は原因を追う。答えは機械の故障ではなく、人間側が「${p.word}」の定義を変えていたこと。\n【回収】${turn}。`,
-   `【冒頭】${p.person}${role}が「${p.word}」を一度だけ使う。意味は「${meaning}」。その瞬間は何も起きない。\nしかし翌日から、周囲の人が主人公を見るたび${emo}を示す。原因は、${rule}社会になっていたから。主人公だけが更新通知を読んでいなかった。\n【最後】${turn}。${ending}。`,
-   `【逆算型】ラストは「${p.word}」の意味が反転する。${p.person}${role}は${situation}${emo}を抱えている。読者には最初、原因を人間関係だと思わせる。中盤で${rule}ことを明かす。そこから「${meaning}」を手がかりに冒頭の違和感を全部つなぎ直す。\n【反転】${turn}。`
- ];
- let available=variants.filter(x=>!previousIdeas.includes(x));
- if(!available.length){previousIdeas=[];available=variants}
- return choose(available);
+
+ let available=variations.filter(v=>!previousIdeas.includes(JSON.stringify(v)));
+ if(!available.length){
+   previousIdeas=[];
+   available=variations;
+ }
+ const v=available[Math.floor(Math.random()*available.length)];
+
+ return `【着想】
+${v.idea}
+
+【冒頭】
+${v.opening}
+
+【回収】
+${v.payoff}
+
+【最後】
+${v.ending}`;
 }
 async function makePlot(){
  if(busy||!slots.every(Boolean))return;busy=true;document.getElementById("aiCard").classList.add("show");document.getElementById("aiText").textContent="考え中...";render();
@@ -244,7 +253,7 @@ function renderNotes(){
 }
 function loadStock(id){
  const s=saved.find(x=>x.id===id);if(!s)return;let w=words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""};
- slots=[w,s.emotion,s.person];held=[true,true,true];aiIdea=s.aiIdea||"";keptIdea=aiIdea;previousIdeas=aiIdea?[aiIdea]:[];show("slot")
+ slots=[w,s.emotion,s.person];held=[true,true,true];shuttered=[false,false,false];aiIdea=s.aiIdea||"";keptIdea=aiIdea;previousIdeas=aiIdea?[aiIdea]:[];show("slot")
 }
 function editStock(id){
  const s=saved.find(x=>x.id===id);if(!s)return;editId=id;slots=[words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""},s.emotion,s.person];fillMemo(s.memo,s.aiIdea);show("memo")
