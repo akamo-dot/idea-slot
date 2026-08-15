@@ -16,11 +16,11 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 .screen{display:none;min-height:100dvh;flex-direction:column}.screen.active{display:flex}
 .header{text-align:center;padding-top:14px}.header h1{font-size:14px;letter-spacing:6px;color:#444;margin:0}
 .slots{display:flex;gap:10px;margin:24px 0 10px}.slot{flex:1;min-width:0;text-align:center}.label{font-size:10px;font-weight:800;letter-spacing:2px;opacity:.7;margin-bottom:6px}
-.box{height:90px;border:2px solid;border-radius:12px;background:var(--surface);display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden}
+.box{height:90px;border:2px solid;border-radius:12px;background:var(--surface);display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden;position:relative;cursor:pointer;transition:.25s}.box.locked:after{content:"";position:absolute;z-index:1;inset:-2px;background:repeating-linear-gradient(0deg,#24242c 0,#24242c 8px,#2d2d36 8px,#2d2d36 10px);transform:translateY(0);animation:shutter .16s ease-out;border-radius:10px}.box.locked:before{content:"●";position:absolute;z-index:2;right:8px;top:6px;font-size:8px;color:#777}@keyframes shutter{from{transform:translateY(-100%)}to{transform:translateY(0)}}
 .val{font-size:24px;font-weight:900;line-height:1.15}.hold{margin-top:6px;padding:4px 9px;border-radius:6px;border:1px solid #252535;background:transparent;color:#444;font-size:9px;font-weight:900;letter-spacing:2px}
 .meaning{min-height:34px;text-align:center;color:#00e5ff80;font-size:12px}.meaning span{display:inline-block;background:#00e5ff08;padding:8px 12px;border-radius:8px}
 .spacer{flex:1}
-.plotbtn{width:100%;padding:12px;border-radius:11px;border:1px solid #7c4dff55;background:#7c4dff12;color:#a98cff;font-weight:900;letter-spacing:3px;margin-bottom:10px}
+.plotbtn{width:100%;padding:12px;border-radius:11px;border:1px solid #7c4dff55;background:#7c4dff12;color:#a98cff;font-size:16px;font-weight:900;letter-spacing:3px;margin-bottom:10px}
 .ai{display:none;background:var(--surface);border:1px solid #7c4dff44;border-radius:12px;padding:14px;margin-bottom:12px}.ai.show{display:block}
 .aihead{font-size:10px;color:#8d70ff;font-weight:900;letter-spacing:2px;margin-bottom:8px}.aitext{font-size:13px;color:#aaa;line-height:1.75;white-space:pre-wrap}
 .aiactions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}.mini{padding:6px 10px;border:1px solid #2a2a3c;border-radius:7px;background:transparent;color:#777;font-size:10px;font-weight:800}.mini.on{color:var(--green);border-color:#4ade8055}
@@ -45,11 +45,11 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 <section id="slotScreen" class="screen active">
 <div class="header"><h1>IDEA SLOT</h1></div>
 <div class="slots">
-  <div class="slot"><div class="label" id="lab0" style="color:var(--cyan)">WORD</div><div class="box" id="box0" style="border-color:#00e5ff40"><div class="val" id="v0">—</div></div><button class="hold" id="h0" onclick="toggleHold(0)">HOLD</button><br><button class="custom-toggle" onclick="toggleCustom()">+ WORD</button></div>
-  <div class="slot"><div class="label" id="lab1" style="color:var(--pink)">EMOTION</div><div class="box" id="box1" style="border-color:#ff6b9d40"><div class="val" id="v1">—</div></div><button class="hold" id="h1" onclick="toggleHold(1)">HOLD</button></div>
-  <div class="slot"><div class="label" id="lab2" style="color:var(--gold)">PERSON</div><div class="box" id="box2" style="border-color:#ffd93d40"><div class="val" id="v2">—</div></div><button class="hold" id="h2" onclick="toggleHold(2)">HOLD</button></div>
+  <div class="slot"><div class="label" id="lab2" style="color:var(--gold)">PERSON</div><div class="box" id="box2" onclick="toggleHold(2)" style="border-color:#ffd93d40"><div class="val" id="v2">—</div></div><button class="hold" id="h2" onclick="toggleHold(2)">HOLD</button><br><button class="custom-toggle" onclick="toggleCustom(2)">+ PERSON</button></div>
+  <div class="slot"><div class="label" id="lab0" style="color:var(--cyan)">WORD</div><div class="box" id="box0" onclick="toggleHold(0)" style="border-color:#00e5ff40"><div class="val" id="v0">—</div></div><button class="hold" id="h0" onclick="toggleHold(0)">HOLD</button><br><button class="custom-toggle" onclick="toggleCustom(0)">+ WORD</button></div>
+  <div class="slot"><div class="label" id="lab1" style="color:var(--pink)">EMOTION</div><div class="box" id="box1" onclick="toggleHold(1)" style="border-color:#ff6b9d40"><div class="val" id="v1">—</div></div><button class="hold" id="h1" onclick="toggleHold(1)">HOLD</button><br><button class="custom-toggle" onclick="toggleCustom(1)">+ EMOTION</button></div>
 </div>
-<div id="custom" class="custom"><input id="cw" placeholder="自分の単語"><input id="cm" placeholder="意味・背景メモ（任意）"><button onclick="addCustom()">ADD & HOLD</button></div>
+<div id="custom" class="custom"><input id="cw" placeholder="追加する内容"><input id="cm" placeholder="意味・背景メモ（任意）"><button id="customAddBtn" onclick="addCustom()">ADD & HOLD</button></div>
 <div class="meaning" id="meaning"></div>
 <div class="spacer"></div>
 <button id="plotBtn" class="plotbtn" onclick="makePlot()" disabled>✦ PLOT</button>
@@ -84,11 +84,17 @@ const PEOPLE=["学生","消防士","赤ちゃん","主夫","首脳","社長","�
 const C=["#00e5ff","#ff6b9d","#ffd93d"];
 
 let custom=JSON.parse(localStorage.getItem("idea-slot:custom")||"[]");
+let customEmotions=JSON.parse(localStorage.getItem("idea-slot:custom-emotions")||"[]");
+let customPeople=JSON.parse(localStorage.getItem("idea-slot:custom-people")||"[]");
+let customType=0;
 let saved=JSON.parse(localStorage.getItem("idea-slot:stocks")||"[]");
 let slots=[null,null,null],held=[false,false,false],busy=false,editId=null;
 let aiIdea="",keptIdea="",previousIdeas=[];
 
 const words=()=>[...BASE_WORDS,...custom];
+const emotions=()=>[...EMOTIONS,...customEmotions.map(x=>x.value)];
+const people=()=>[...PEOPLE,...customPeople.map(x=>x.value)];
+function slotMemo(i){if(i===0)return slots[0]?.meaning||"";if(i===1)return customEmotions.find(x=>x.value===slots[1])?.memo||"";return customPeople.find(x=>x.value===slots[2])?.memo||""}
 const persist=()=>localStorage.setItem("idea-slot:stocks",JSON.stringify(saved));
 const val=i=>i===0?(slots[0]?.word||"—"):(slots[i]||"—");
 const pick=(a,current)=>{let b=a.filter(x=>x!==current);if(!b.length)b=a;return b[Math.floor(Math.random()*b.length)]};
@@ -99,37 +105,55 @@ function render(){
    const v=document.getElementById("v"+i),b=document.getElementById("box"+i),h=document.getElementById("h"+i),l=document.getElementById("lab"+i);
    v.textContent=val(i);v.style.fontSize=val(i).length>5?"18px":"24px";
    b.style.borderColor=held[i]?C[i]:C[i]+"40";b.style.boxShadow=held[i]?`0 0 16px ${C[i]}30`:"none";
-   l.innerHTML=(held[i]?"● ":"")+["WORD","EMOTION","PERSON"][i];h.disabled=!slots[i]||busy;h.textContent=held[i]?"HELD":"HOLD";h.style.color=held[i]?C[i]:"#444";
+   l.innerHTML=(held[i]?"● ":"")+["WORD","EMOTION","PERSON"][i];h.disabled=!slots[i]||busy;h.textContent="HOLD";h.style.color=held[i]?C[i]:"#444";b.classList.toggle("locked",held[i]);
  }
- document.getElementById("meaning").innerHTML=slots[0]?.meaning?`<span>${escapeText(slots[0].word)}：${escapeText(slots[0].meaning)}</span>`:"";
+ const notes=[];if(slotMemo(2))notes.push(`PERSON：${escapeText(slotMemo(2))}`);if(slotMemo(0))notes.push(`WORD：${escapeText(slotMemo(0))}`);if(slotMemo(1))notes.push(`EMOTION：${escapeText(slotMemo(1))}`);document.getElementById("meaning").innerHTML=notes.length?`<span>${notes.join("　/　")}</span>`:"";
  const all=held.every(Boolean);
  const sb=document.getElementById("startBtn");sb.disabled=busy||all;sb.textContent=busy?"...":all?"ALL HELD":"START";sb.style.opacity=sb.disabled?.35:1;
  document.getElementById("saveBtn").disabled=busy||!slots.every(Boolean);
  document.getElementById("saveBtn").style.color=slots.every(Boolean)?"var(--purple)":"#444";
  document.getElementById("plotBtn").disabled=busy||!slots.every(Boolean);
  const nb=document.getElementById("noteBtn");nb.innerHTML="NOTE"+(saved.length?`<span class="badge">${saved.length}</span>`:"");nb.style.color=saved.length?"var(--gold)":"#444";
- document.getElementById("stats").textContent=`${words().length}w · ${EMOTIONS.length}e · ${PEOPLE.length}p`;
+ document.getElementById("stats").textContent=`${words().length}w · ${emotions().length}e · ${people().length}p`;
  renderAI();
 }
 function toggleHold(i){if(slots[i]){held[i]=!held[i];render()}}
 function invalidateAI(){aiIdea="";keptIdea="";previousIdeas=[];renderAI()}
 async function spin(){
  if(busy||held.every(Boolean))return;busy=true;invalidateAI();render();
- const targets=[held[0]?slots[0]:pickW(),held[1]?slots[1]:pick(EMOTIONS,slots[1]),held[2]?slots[2]:pick(PEOPLE,slots[2])];
- const lists=[words().map(x=>x.word),EMOTIONS,PEOPLE], timers=[];
- for(let i=0;i<3;i++)if(!held[i]){
-   let n=0;timers[i]=setInterval(()=>{document.getElementById("v"+i).textContent=lists[i][Math.floor(Math.random()*lists[i].length)];},65);
-   await wait(550);clearInterval(timers[i]);slots[i]=targets[i];render();
+ const targets=[held[0]?slots[0]:pickW(),held[1]?slots[1]:pick(emotions(),slots[1]),held[2]?slots[2]:pick(people(),slots[2])];
+ const lists=[words().map(x=>x.word),emotions(),people()], timers=[];
+ // 見た目の並びどおり PERSON → WORD → EMOTION の順に停止
+ const stopOrder=[2,0,1];
+ for(const i of stopOrder)if(!held[i]){
+   timers[i]=setInterval(()=>{document.getElementById("v"+i).textContent=lists[i][Math.floor(Math.random()*lists[i].length)];},65);
+   await wait(650);clearInterval(timers[i]);slots[i]=targets[i];render();
  }
  slots=targets;busy=false;render();
 }
 function wait(ms){return new Promise(r=>setTimeout(r,ms))}
 function resetSlots(){slots=[null,null,null];held=[false,false,false];invalidateAI();render()}
-function toggleCustom(){document.getElementById("custom").classList.toggle("show")}
+function toggleCustom(type){
+ customType=type;
+ const panel=document.getElementById("custom");
+ panel.classList.toggle("show");
+ const names=["WORD","EMOTION","PERSON"];
+ document.getElementById("cw").placeholder=`自分の${names[type]}`;
+ document.getElementById("cm").placeholder="意味・背景メモ（任意）";
+}
 function addCustom(){
- const w=document.getElementById("cw").value.trim(),m=document.getElementById("cm").value.trim();if(!w)return;
- let obj=words().find(x=>x.word===w);if(!obj){obj={word:w,meaning:m};custom.push(obj);localStorage.setItem("idea-slot:custom",JSON.stringify(custom))}
- slots[0]=obj;held[0]=true;document.getElementById("cw").value="";document.getElementById("cm").value="";toggleCustom();invalidateAI();render();
+ const v=document.getElementById("cw").value.trim(),m=document.getElementById("cm").value.trim();if(!v)return;
+ if(customType===0){
+   let obj=words().find(x=>x.word===v);if(!obj){obj={word:v,meaning:m};custom.push(obj);localStorage.setItem("idea-slot:custom",JSON.stringify(custom))}
+   slots[0]=obj;held[0]=true;
+ }else if(customType===1){
+   if(!customEmotions.some(x=>x.value===v)){customEmotions.push({value:v,memo:m});localStorage.setItem("idea-slot:custom-emotions",JSON.stringify(customEmotions))}
+   slots[1]=v;held[1]=true;
+ }else{
+   if(!customPeople.some(x=>x.value===v)){customPeople.push({value:v,memo:m});localStorage.setItem("idea-slot:custom-people",JSON.stringify(customPeople))}
+   slots[2]=v;held[2]=true;
+ }
+ document.getElementById("cw").value="";document.getElementById("cm").value="";document.getElementById("custom").classList.remove("show");invalidateAI();render();
 }
 
 /* AI hook:
@@ -137,19 +161,58 @@ function addCustom(){
    後でこの関数だけ、Cloudflare Worker / Vercel Function等の安全なAPIへ差し替える。 */
 async function generatePlot(p){
  await wait(500);
- const patterns=[
- `${p.person}は「${p.word}」を避けて暮らしている。ところが、それを避けるほど周囲では${p.emotion}が増えていく。原因を追ううちに、本人だけが「${p.word}」の意味を昔のまま理解していると分かる。最後に、その言葉を自分から使った瞬間、世界の見え方が反転する。`,
- `「${p.word}」が社会インフラになった近未来。${p.person}だけが利用資格を失う。最初は${p.emotion}に支配されるが、不便な生活の中で、誰も気づかなかった別の価値を発見する。やがて人々がその人物を真似し始め、便利だった側が少数派になる。`,
- `${p.person}が始めた商売は「${p.word}を預かります」。客は軽い気持ちで預けるが、預けた瞬間から生活からその概念そのものが消える。評判になるほど客は増える。ところがある客が返却を求めた日、店主は預かったものを思い出せない。${p.emotion}が取引の代価だったと判明する。`,
- `ある朝、${p.person}だけが「${p.word}」を認識できなくなる。物も言葉も存在しているのに、それだけ見えない。${p.emotion}を抱えながら原因を探すと、消えたのではなく、社会全体が別の名前に置き換えていたことが分かる。最後に主人公自身の名前まで同じ仕組みで変更される。`,
- `${p.word} × ${p.emotion} × ${p.person}。一見つながらない三つを、日常の小さな異常から始める。${p.person}が${p.word}に関する些細な選択をしたことで、周囲の人だけが${p.emotion}を示す。主人公は理由が分からない。終盤、その感情は主人公に向けられたものではなく、主人公がまだ知らない未来への反応だったと分かる。`
+ const meaning=(p.meaning||p.word).trim();
+ const personMemo=(p.personMemo||"").trim();
+ const emotionMemo=(p.emotionMemo||"").trim();
+
+ // WORDを「単なる飾り」ではなく、意味から物語のルールへ変換する。
+ const ruleSeeds=[
+   `「${p.word}」――つまり「${meaning}」が、法律で数値化される`,
+   `「${p.word}」の意味である「${meaning}」が、本当に身体現象として起きる`,
+   `人の「${p.word}」をAIが検知し、本人より先に行動する`,
+   `「${p.word}」を他人へ譲渡・売買できるサービスが普及する`,
+   `「${p.word}」を一度使うたび、別の何かを失う仕組みがある`,
+   `社会から「${p.word}」という言葉だけが消え、現象だけが残る`,
+   `「${p.word}」の度合いが全員の頭上に表示される`,
+   `「${p.word}」を禁止した結果、別の形で「${meaning}」が噴き出す`
  ];
- let available=patterns.filter(x=>!previousIdeas.includes(x));if(!available.length){previousIdeas=[];available=patterns}
- return available[Math.floor(Math.random()*available.length)];
+ const situations=[
+   `仕事中`, `家族との何気ない夕食で`, `病院の待合室で`, `学校の帰り道に`,
+   `役所の窓口で`, `SNSを眺めている最中に`, `葬式の朝に`, `デートの途中で`,
+   `いつもの通勤中に`, `誕生日の夜に`
+ ];
+ const turns=[
+   `本人は被害者だと思っていたが、実はその仕組みを望んだ最初の一人だった`,
+   `異常なのは主人公ではなく、正常に見えていた周囲のほうだった`,
+   `失われていたのではなく、誰かが主人公の分まで引き受けていた`,
+   `便利さの代償だと思われたものが、実は人間を守る最後の安全装置だった`,
+   `最後に同じ出来事がもう一度起き、冒頭の言葉の意味だけが反転する`,
+   `主人公が解決した瞬間、それまで困っていた状態のほうが幸福だったと分かる`,
+   `その感情は主人公自身のものではなく、未来の本人から送られていた`,
+   `ルールを破った主人公だけが、初めて本来の「${p.word}」を体験する`
+ ];
+ const endings=[
+   `笑えるほど小さな日常の一言で終える`, `静かな一文で余韻を残す`,
+   `冒頭と同じ場面に戻して意味を反転させる`, `読者だけが真相に気づく形で切る`,
+   `主人公の選択は正しかったのか判断を残して終える`
+ ];
+ const choose=a=>a[Math.floor(Math.random()*a.length)];
+ const role=personMemo?`（人物メモ：${personMemo}）`:"";
+ const emo=emotionMemo?`${p.emotion}（${emotionMemo}）`:p.emotion;
+ const rule=choose(ruleSeeds), situation=choose(situations), turn=choose(turns), ending=choose(endings);
+ const variants=[
+   `【核】${rule}世界。\n${p.person}${role}は${situation}、自分だけそのルールから外れていることに気づく。最初は${emo}を感じるが、調べるほど「${meaning}」という本来の意味と、社会が使う「${p.word}」の意味がずれていると分かる。\n【反転】${turns[Math.floor(Math.random()*turns.length)]}。\n【ラスト】${ending}。`,
+   `【着想】${p.word}＝「${meaning}」を、そのまま未来の技術にする。${p.person}${role}の生活では、${rule}。\nある日、${situation}その判定だけが逆転する。${emo}から始まり、主人公は原因を追う。答えは機械の故障ではなく、人間側が「${p.word}」の定義を変えていたこと。\n【回収】${turn}。`,
+   `【冒頭】${p.person}${role}が「${p.word}」を一度だけ使う。意味は「${meaning}」。その瞬間は何も起きない。\nしかし翌日から、周囲の人が主人公を見るたび${emo}を示す。原因は、${rule}社会になっていたから。主人公だけが更新通知を読んでいなかった。\n【最後】${turn}。${ending}。`,
+   `【逆算型】ラストは「${p.word}」の意味が反転する。${p.person}${role}は${situation}${emo}を抱えている。読者には最初、原因を人間関係だと思わせる。中盤で${rule}ことを明かす。そこから「${meaning}」を手がかりに冒頭の違和感を全部つなぎ直す。\n【反転】${turn}。`
+ ];
+ let available=variants.filter(x=>!previousIdeas.includes(x));
+ if(!available.length){previousIdeas=[];available=variants}
+ return choose(available);
 }
 async function makePlot(){
  if(busy||!slots.every(Boolean))return;busy=true;document.getElementById("aiCard").classList.add("show");document.getElementById("aiText").textContent="考え中...";render();
- try{aiIdea=await generatePlot({word:slots[0].word,meaning:slots[0].meaning||"",emotion:slots[1],person:slots[2],previousIdeas});previousIdeas.push(aiIdea)}
+ try{aiIdea=await generatePlot({word:slots[0].word,meaning:slots[0].meaning||"",emotion:slots[1],emotionMemo:slotMemo(1),person:slots[2],personMemo:slotMemo(2),previousIdeas});previousIdeas.push(aiIdea)}
  finally{busy=false;render()}
 }
 function renderAI(){
@@ -166,7 +229,7 @@ function fillMemo(text,idea){
  document.getElementById("memo").value=text||"";document.getElementById("memoAIBox").style.display=idea?"block":"none";document.getElementById("memoAI").textContent=idea||"";
 }
 function saveMemo(){
- const data={word:slots[0].word,meaning:slots[0].meaning||"",emotion:slots[1],person:slots[2],memo:document.getElementById("memo").value,aiIdea:document.getElementById("memoAI").textContent||"",used:false};
+ const data={word:slots[0].word,meaning:slots[0].meaning||"",emotion:slots[1],emotionMemo:slotMemo(1),person:slots[2],personMemo:slotMemo(2),memo:document.getElementById("memo").value,aiIdea:document.getElementById("memoAI").textContent||"",used:false};
  if(editId){let i=saved.findIndex(x=>x.id===editId);if(i>=0)saved[i]={...saved[i],...data,used:saved[i].used};editId=null;persist();show("notes")}
  else{saved.push({id:Date.now(),...data});persist();show("slot")}
 }
@@ -190,7 +253,7 @@ function toggleUsed(id){let s=saved.find(x=>x.id===id);if(s){s.used=!s.used;pers
 function del(id){saved=saved.filter(x=>x.id!==id);persist();renderNotes()}
 function clearAll(){if(confirm("全てのストックを削除しますか？")){saved=[];persist();renderNotes()}}
 function copyStock(id){
- const s=saved.find(x=>x.id===id);let t=`${s.word} × ${s.emotion} × ${s.person}`;if(s.meaning)t+=`\n${s.word}：${s.meaning}`;if(s.memo)t+=`\n\nMEMO\n${s.memo}`;if(s.aiIdea)t+=`\n\nAI IDEA\n${s.aiIdea}`;
+ const s=saved.find(x=>x.id===id);let t=`${s.word} × ${s.emotion} × ${s.person}`;if(s.personMemo)t+=`\n${s.person}：${s.personMemo}`;if(s.meaning)t+=`\n${s.word}：${s.meaning}`;if(s.emotionMemo)t+=`\n${s.emotion}：${s.emotionMemo}`;if(s.memo)t+=`\n\nMEMO\n${s.memo}`;if(s.aiIdea)t+=`\n\nAI IDEA\n${s.aiIdea}`;
  navigator.clipboard.writeText(t).then(()=>{let b=document.getElementById("cp"+id);b.textContent="COPIED";setTimeout(()=>b.textContent="COPY",1200)})
 }
 function show(name){
