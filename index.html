@@ -50,6 +50,13 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 .stocktags{display:flex;gap:5px;flex-wrap:wrap;align-items:center}.stockmemo,.stockai{padding-left:24px;margin-top:9px;color:#999;font-size:13px;line-height:1.6}.stockai{color:#817b95}.stocklabel{font-size:9px;color:#555;font-weight:900;letter-spacing:1px}
 .actions{display:flex;gap:6px;flex-wrap:wrap;padding-left:24px;margin-top:11px}.actions button{padding:6px 9px;border:1px solid #29293b;border-radius:7px;background:transparent;color:#666;font-size:10px;font-weight:800}.actions .load{color:#8f72ff;border-color:#7c4dff66}.actions .usedon{color:var(--green);border-color:#4ade8055}
 .clear{width:100%;padding:10px;border:1px solid #421a1a;border-radius:8px;background:transparent;color:#ef4444;margin:12px 0 25px}
+
+.idea-tools{display:flex;gap:8px;margin-top:12px}
+.idea-tool{flex:1;padding:11px 5px;border-radius:10px;border:1px solid #242437;background:#10101b;color:#777;font-size:11px;font-weight:900;letter-spacing:1.2px}
+.idea-tool:disabled{opacity:.25}.idea-assist{display:none;margin-top:10px;padding:12px 14px;border:1px solid #252538;border-radius:11px;background:#0e0e18;line-height:1.55}
+.idea-assist.show{display:block}.idea-assist-label{font-size:9px;font-weight:900;letter-spacing:2px;color:#555;margin-bottom:5px}.idea-assist-main{font-size:17px;font-weight:850;color:#eee}.idea-assist-sub{font-size:11px;color:#666;margin-top:4px}
+.stock-state{font-size:9px;font-weight:900;letter-spacing:.5px;white-space:nowrap}.stock-state.seed{color:#777}.stock-state.grow{color:#ffd93d}.stock-state.used{color:#4ade80}
+.filterbar{display:flex;gap:6px;margin-bottom:14px}.filterbar button{flex:1;padding:8px 3px;border:1px solid #222233;border-radius:8px;color:#555;font-size:9px;font-weight:900}.filterbar button.active{border-color:#555;color:#bbb;background:#151520}
 </style>
 </head>
 <body>
@@ -69,10 +76,14 @@ button,textarea,input{font:inherit}button{cursor:pointer}
   <button id="startBtn" class="start" onclick="spin()">START</button>
   <div class="row"><button id="saveBtn" class="sub" onclick="openMemo()" disabled>SAVE</button><button id="noteBtn" class="sub" onclick="show('notes')">NOTE</button></div>
 </div>
+<div class="idea-tools">
+ <button id="plusBtn" class="idea-tool" onclick="addWildcard()" disabled>＋1</button>
+ <button id="shiftBtn" class="idea-tool" onclick="shiftView()" disabled>SHIFT</button>
+ <button class="idea-tool" onclick="revisitSeed()">REVISIT</button>
+</div>
+<div id="ideaAssist" class="idea-assist"></div>
 
 <!-- PLOTは操作ボタンの下。開閉してもSTART位置は動かない -->
-<button id="plotBtn" class="plotbtn" onclick="makePlot()" disabled>✦ PLOT</button>
-<div id="aiCard" class="ai"><div class="aihead">AI IDEA</div><div id="aiText" class="aitext"></div><div class="aiactions"><button id="keepBtn" class="mini" onclick="keepIdea()">☆ KEEP</button><button class="mini" onclick="makePlot(true)">↻ ANOTHER</button></div></div>
 <div class="spacer"></div>
 <div class="reset"><button onclick="resetSlots()">RESET</button></div>
 <div id="stats" style="text-align:center;color:#181818;font-size:10px;margin-top:3px"></div>
@@ -105,7 +116,11 @@ let custom=JSON.parse(localStorage.getItem("idea-slot:custom")||"[]");
 let customEmotions=JSON.parse(localStorage.getItem("idea-slot:custom-emotions")||"[]");
 let customPeople=JSON.parse(localStorage.getItem("idea-slot:custom-people")||"[]");
 let customType=0;
-let saved=JSON.parse(localStorage.getItem("idea-slot:stocks")||"[]").map(s=>({...s,createdAt:s.createdAt||s.id||null,used:!!s.used}));
+let saved=JSON.parse(localStorage.getItem("idea-slot:stocks")||"[]").map(s=>({...s,createdAt:s.createdAt||s.id||null,used:!!s.used,state:s.state||(s.used?"USED":"SEED")}));
+
+const WILDCARDS=["宇宙","コンビニ","病院","学校","葬式","結婚式","裁判所","電車","海","月","地下","100年後","昨日","最後の日","無人島","老人ホーム","SNS","夢","祭り","会社","家族","お金","法律","ランキング","サブスク","レンタル","中古","無料","禁止","税金","保険","匂い","音","体温","名前","記憶","睡眠","食事","ゴミ","天気","鏡","写真","手紙"];
+const SHIFT_VIEWS=["過去","現在","未来","家庭","会社","社会","子どもの目","老人の目","日本","海外","宇宙","日常","制度","極端","逆の立場","犯罪","恋愛","仕事","商売","教育","身体","死後","100年後","誰にも知られない場所","全員が知っている世界"];
+let wildcardNow="",shiftNow="",stockFilter="ALL";
 let slots=[null,null,null],held=[false,false,false],shuttered=[false,false,false],busy=false,editId=null;
 let aiIdea="",keptIdea="",previousIdeas=[],plotOpen=false;
 
@@ -146,26 +161,54 @@ function render(){
  const all=held.every(Boolean);
  const sb=document.getElementById("startBtn");sb.disabled=busy||all;sb.textContent=busy?"...":all?"ALL HELD":"START";sb.style.opacity=sb.disabled?.35:1;
  document.getElementById("saveBtn").disabled=busy||!slots.every(Boolean);
- document.getElementById("saveBtn").style.color=slots.every(Boolean)?"var(--purple)":"#444";
- document.getElementById("plotBtn").disabled=busy||!slots.every(Boolean)||activePlotCount()===0;
+ document.getElementById("saveBtn").style.color=(!busy&&slots.every(Boolean))?"var(--purple)":"#444";
+ const pbtn=document.getElementById("plotBtn");if(pbtn)pbtn.disabled=busy||!slots.every(Boolean)||activePlotCount()===0;
  const nb=document.getElementById("noteBtn");nb.innerHTML="NOTE"+(saved.length?`<span class="badge">${saved.length}</span>`:"");nb.style.color=saved.length?"var(--gold)":"#444";
  document.getElementById("stats").textContent=`${words().length}w · ${emotions().length}e · ${people().length}p`;
  renderAI();
+ const ideaReady=slots.every(Boolean)&&!busy;
+ const pb=document.getElementById("plusBtn"),shb=document.getElementById("shiftBtn");if(pb)pb.disabled=!ideaReady;if(shb)shb.disabled=!ideaReady;
 }
 function toggleHold(i){if(slots[i]){held[i]=!held[i];render()}}
 function toggleShutter(i){if(slots[i]&&!busy){shuttered[i]=!shuttered[i];render()}}
 function invalidateAI(){aiIdea="";keptIdea="";previousIdeas=[];plotOpen=false;renderAI()}
 async function spin(){
- if(busy||held.every(Boolean))return;busy=true;invalidateAI();render();
- const targets=[held[0]?slots[0]:pickW(),held[1]?slots[1]:pick(emotions(),slots[1]),held[2]?slots[2]:pick(people(),slots[2])];
- const lists=[words().map(x=>x.word),emotions(),people()], timers=[];
- // 見た目の並びどおり PERSON → WORD → EMOTION の順に停止
- const stopOrder=[2,0,1];
- for(const i of stopOrder)if(!held[i]){
-   timers[i]=setInterval(()=>{document.getElementById("v"+i).textContent=lists[i][Math.floor(Math.random()*lists[i].length)];},65);
-   await wait(650);clearInterval(timers[i]);slots[i]=targets[i];render();
+ clearAssist();
+ if(busy||held.every(Boolean))return;
+ busy=true;
+ render();
+
+ try{
+   const targets=[
+     held[0]?slots[0]:pickW(),
+     held[1]?slots[1]:pick(EMOTIONS,slots[1]),
+     held[2]?slots[2]:pick(PEOPLE,slots[2])
+   ];
+
+   // PERSON → WORD → EMOTION の順に停止
+   const order=[2,0,1];
+   const lists=[words().map(x=>x.word),EMOTIONS,PEOPLE];
+
+   for(const i of order){
+     if(held[i]) continue;
+
+     const el=document.getElementById("v"+i);
+     let timer=setInterval(()=>{
+       const arr=lists[i];
+       el.textContent=arr[Math.floor(Math.random()*arr.length)];
+     },65);
+
+     await wait(550);
+     clearInterval(timer);
+     slots[i]=targets[i];
+     render();
+   }
+
+   slots=targets;
+ }finally{
+   busy=false;
+   render();
  }
- slots=targets;busy=false;render();
 }
 function wait(ms){return new Promise(r=>setTimeout(r,ms))}
 function buildPlotPayload(){
@@ -318,7 +361,7 @@ async function makePlot(forceAnother=false){
  }
 }
 function renderAI(){
- const card=document.getElementById("aiCard");if(!aiIdea||!plotOpen){card.classList.remove("show");return}
+ const card=document.getElementById("aiCard");if(!card)return;if(!aiIdea||!plotOpen){card.classList.remove("show");return}
  card.classList.add("show");document.getElementById("aiText").textContent=aiIdea;
  const k=document.getElementById("keepBtn");k.textContent=keptIdea===aiIdea?"★ KEPT":"☆ KEEP";k.classList.toggle("on",keptIdea===aiIdea);
 }
@@ -333,54 +376,32 @@ function fillMemo(text,idea){
 function saveMemo(){
  const data={word:slots[0].word,meaning:slots[0].meaning||"",emotion:slots[1],emotionMemo:slotMemo(1),person:slots[2],personMemo:slotMemo(2),memo:document.getElementById("memo").value,aiIdea:document.getElementById("memoAI").textContent||"",used:false};
  if(editId){let i=saved.findIndex(x=>x.id===editId);if(i>=0)saved[i]={...saved[i],...data,used:saved[i].used};editId=null;persist();show("notes")}
- else{const now=Date.now();saved.push({id:now,createdAt:now,...data});persist();show("slot")}
+ else{const now=Date.now();saved.push({id:now,createdAt:now,state:"SEED",used:false,...data});persist();show("slot")}
 }
 function renderNotes(){
- const list=document.getElementById("stockList");
- document.getElementById("clearBtn").style.display=saved.length?"block":"none";
-
- if(!saved.length){
-   list.innerHTML='<div style="text-align:center;color:#555;padding:60px 0">まだストックがありません</div>';
-   return;
- }
-
- list.innerHTML=saved.map((s,i)=>{
-   const isOpen=openStockId===s.id;
-   const date=formatStockDate(s.createdAt||s.id);
-   const person=s.person||"—";
-   const word=s.word||"—";
-   const emotion=s.emotion||"—";
-
-   return `<div class="stock ${s.used?"used":""} ${isOpen?"open":""}" onclick="toggleStockOpen(${s.id},event)">
-     <div class="stock-collapsed">
-       <div class="pwe">
-         <span class="pwe-item" style="color:var(--gold)">${escapeText(person)}</span>
-         <span class="sep">×</span>
-         <span class="pwe-item" style="color:var(--cyan)">${escapeText(word)}</span>
-         <span class="sep">×</span>
-         <span class="pwe-item" style="color:var(--pink)">${escapeText(emotion)}</span>
-       </div>
-       ${s.used?'<span class="stock-used-mark">✓ USED</span>':""}
-       ${date?`<span class="stock-date">${date}</span>`:""}
-     </div>
-
-     <div class="stock-expanded">
-       ${s.meaning?`<div class="stockmemo"><div class="stocklabel">WORD MEMO</div>${escapeHTML(s.meaning)}</div>`:""}
-       ${s.personNote?`<div class="stockmemo"><div class="stocklabel">PERSON MEMO</div>${escapeHTML(s.personNote)}</div>`:""}
-       ${s.emotionNote?`<div class="stockmemo"><div class="stocklabel">EMOTION MEMO</div>${escapeHTML(s.emotionNote)}</div>`:""}
-       ${s.memo?`<div class="stockmemo"><div class="stocklabel">MEMO</div>${escapeHTML(s.memo)}</div>`:""}
-       ${s.aiIdea?`<div class="stockai"><div class="stocklabel">AI IDEA</div>${escapeHTML(s.aiIdea)}</div>`:""}
-
-       <div class="actions">
-         <button class="load" onclick="loadStock(${s.id})">LOAD</button>
-         <button onclick="editStock(${s.id})">EDIT</button>
-         <button id="cp${s.id}" onclick="copyStock(${s.id})">COPY</button>
-         <button class="${s.used?"usedon":""}" onclick="toggleUsed(${s.id})">${s.used?"✓ USED":"○ UNUSED"}</button>
-         <button onclick="del(${s.id})">✕</button>
-       </div>
-     </div>
-   </div>`;
- }).join("");
+ const list=document.getElementById("stockList"),clear=document.getElementById("clearBtn");
+ if(clear)clear.style.display=saved.length?"block":"none";
+ const stateOf=s=>s.state||(s.used?"USED":"SEED");
+ const counts={ALL:saved.length,SEED:saved.filter(s=>stateOf(s)==="SEED").length,GROW:saved.filter(s=>stateOf(s)==="GROW").length,USED:saved.filter(s=>stateOf(s)==="USED").length};
+ const f=stockFilter==="ALL"?saved:saved.filter(s=>stateOf(s)===stockFilter);
+ const bar=`<div class="filterbar">${["ALL","SEED","GROW","USED"].map(x=>`<button class="${stockFilter===x?"active":""}" onclick="setStockFilter('${x}')">${x} ${counts[x]}</button>`).join("")}</div>`;
+ if(!f.length){list.innerHTML=bar+`<div style="text-align:center;color:#555;padding:50px 0">${saved.length?"この状態のSTOCKはありません":"まだストックがありません"}</div>`;return}
+ list.innerHTML=bar+f.map(s=>{
+  const st=stateOf(s),open=openStockId===s.id,date=formatStockDate(s.createdAt||s.id);
+  return `<div class="stock ${st==="USED"?"used":""} ${open?"open":""}" onclick="toggleStockOpen(${s.id},event)">
+   <div class="stock-collapsed"><div class="pwe">
+    <span class="pwe-item" style="color:var(--gold)">${escapeText(s.person||"—")}</span><span class="sep">×</span>
+    <span class="pwe-item" style="color:var(--cyan)">${escapeText(s.word||"—")}</span><span class="sep">×</span>
+    <span class="pwe-item" style="color:var(--pink)">${escapeText(s.emotion||"—")}</span>
+   </div><span class="stock-state ${st.toLowerCase()}">${st==="USED"?"✓ USED":st}</span>${date?`<span class="stock-date">${date}</span>`:""}</div>
+   <div class="stock-expanded">
+    ${s.meaning?`<div class="stockmemo"><div class="stocklabel">WORD MEMO</div>${escapeHTML(s.meaning)}</div>`:""}
+    ${s.personNote?`<div class="stockmemo"><div class="stocklabel">PERSON MEMO</div>${escapeHTML(s.personNote)}</div>`:""}
+    ${s.emotionNote?`<div class="stockmemo"><div class="stocklabel">EMOTION MEMO</div>${escapeHTML(s.emotionNote)}</div>`:""}
+    ${s.memo?`<div class="stockmemo"><div class="stocklabel">MEMO</div>${escapeHTML(s.memo)}</div>`:""}
+    <div class="actions"><button class="load" onclick="loadStock(${s.id})">LOAD</button><button onclick="editStock(${s.id})">EDIT</button><button id="cp${s.id}" onclick="copyStock(${s.id})">COPY</button><button class="${st==="USED"?"usedon":""}" onclick="cycleState(${s.id})">${st} → ${st==="SEED"?"GROW":st==="GROW"?"USED":"SEED"}</button><button onclick="del(${s.id})">✕</button></div>
+   </div></div>`
+ }).join("")
 }
 function loadStock(id){
  const s=saved.find(x=>x.id===id);if(!s)return;let w=words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""};
@@ -390,12 +411,45 @@ function editStock(id){
  const s=saved.find(x=>x.id===id);if(!s)return;editId=id;slots=[words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""},s.emotion,s.person];fillMemo(s.memo,s.aiIdea);show("memo")
 }
 function toggleUsed(id){let s=saved.find(x=>x.id===id);if(s){s.used=!s.used;openStockId=id;persist();renderNotes()}}
-function del(id){saved=saved.filter(x=>x.id!==id);if(openStockId===id)openStockId=null;persist();renderNotes()}
-function clearAll(){if(confirm("全てのストックを削除しますか？")){saved=[];persist();renderNotes()}}
+function del(id){
+ const s=saved.find(x=>x.id===id);
+ const label=s?`${s.person||"—"} × ${s.word||"—"} × ${s.emotion||"—"}`:"このSTOCK";
+ if(!confirm(`削除しますか？\n\n${label}\n\nこの操作は元に戻せません。`)) return;
+ saved=saved.filter(x=>x.id!==id);
+ if(openStockId===id)openStockId=null;
+ persist();
+ renderNotes();
+}
+function clearAll(){
+ if(!saved.length)return;
+ const ok=confirm(
+   `全てのSTOCK（${saved.length}件）を削除しますか？\n\n`+
+   `SEED・GROW・USEDを含む全データが消えます。\n`+
+   `この操作は元に戻せません。`
+ );
+ if(!ok)return;
+
+ const second=confirm("本当に全て削除しますか？");
+ if(!second)return;
+
+ saved=[];
+ openStockId=null;
+ persist();
+ renderNotes();
+}
 function copyStock(id){
  const s=saved.find(x=>x.id===id);let t=`${s.word} × ${s.emotion} × ${s.person}`;if(s.personMemo)t+=`\n${s.person}：${s.personMemo}`;if(s.meaning)t+=`\n${s.word}：${s.meaning}`;if(s.emotionMemo)t+=`\n${s.emotion}：${s.emotionMemo}`;if(s.memo)t+=`\n\nMEMO\n${s.memo}`;if(s.aiIdea)t+=`\n\nAI IDEA\n${s.aiIdea}`;
  navigator.clipboard.writeText(t).then(()=>{let b=document.getElementById("cp"+id);b.textContent="COPIED";setTimeout(()=>b.textContent="COPY",1200)})
 }
+
+function randomDifferent(arr,current){const p=arr.filter(x=>x!==current);return p[Math.floor(Math.random()*p.length)]||arr[0]}
+function showAssist(label,main,sub=""){const b=document.getElementById("ideaAssist");b.innerHTML=`<div class="idea-assist-label">${label}</div><div class="idea-assist-main">${escapeText(main)}</div>${sub?`<div class="idea-assist-sub">${escapeText(sub)}</div>`:""}`;b.classList.add("show")}
+function clearAssist(){wildcardNow="";shiftNow="";const b=document.getElementById("ideaAssist");if(b){b.classList.remove("show");b.innerHTML=""}}
+function addWildcard(){if(!slots.every(Boolean)||busy)return;wildcardNow=randomDifferent(WILDCARDS,wildcardNow);showAssist("＋1 / INTRUDER",wildcardNow,"今の3語に、これだけ追加して考える")}
+function shiftView(){if(!slots.every(Boolean)||busy)return;shiftNow=randomDifferent(SHIFT_VIEWS,shiftNow);showAssist("SHIFT / VIEWPOINT",shiftNow,"3語はそのまま。見る角度だけ変える")}
+function revisitSeed(){const c=saved.filter(s=>(s.state||(s.used?"USED":"SEED"))!=="USED");if(!c.length){showAssist("REVISIT","再会できる未使用STOCKがありません","SEED / GROWを保存すると、ここに戻ってきます");return}const s=c[Math.floor(Math.random()*c.length)];showAssist("REVISIT",`${s.person||"—"} × ${s.word||"—"} × ${s.emotion||"—"}`,formatStockDate(s.createdAt||s.id)+" の種")}
+function cycleState(id){const s=saved.find(x=>x.id===id);if(!s)return;const c=s.state||(s.used?"USED":"SEED");s.state=c==="SEED"?"GROW":c==="GROW"?"USED":"SEED";s.used=s.state==="USED";openStockId=id;persist();renderNotes()}
+function setStockFilter(v){stockFilter=v;renderNotes()}
 function show(name){
  document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));document.getElementById(name+"Screen").classList.add("active");
  if(name==="notes")renderNotes();if(name==="slot")render()
