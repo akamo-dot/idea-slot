@@ -113,6 +113,7 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 <section id="memoScreen" class="screen">
 <button class="back" onclick="show('slot')">← スロットに戻る</button>
 <div id="combo" class="combo"></div>
+<div id="memoStoryType" style="display:none;margin:-6px 0 14px;font-size:12px;color:#cdbb62"></div>
 <div class="memobox"><label>MEMO</label><textarea id="memo" rows="6" placeholder="この組み合わせからアイデアを書く..."></textarea></div>
 <div id="memoAIBox" class="memobox" style="display:none"><label style="color:#7862a7">AI IDEA</label><div id="memoAI" style="font-size:13px;color:#999;line-height:1.7"></div></div>
 <button class="complete" onclick="saveMemo()">完了</button>
@@ -140,7 +141,7 @@ let custom=JSON.parse(localStorage.getItem("idea-slot:custom")||"[]");
 let customEmotions=JSON.parse(localStorage.getItem("idea-slot:custom-emotions")||"[]");
 let customPeople=JSON.parse(localStorage.getItem("idea-slot:custom-people")||"[]");
 let customType=0;
-let saved=JSON.parse(localStorage.getItem("idea-slot:stocks")||"[]").map(s=>({...s,createdAt:s.createdAt||s.id||null,used:!!s.used,state:s.state||(s.used?"USED":"SEED")}));
+let saved=JSON.parse(localStorage.getItem("idea-slot:stocks")||"[]").map(s=>({...s,createdAt:s.createdAt||s.id||null,used:!!s.used,state:s.state||(s.used?"USED":"SEED"),blind:Array.isArray(s.blind)&&s.blind.length===3?s.blind:[false,false,false]}));
 
 
 const STORY_TYPES=[
@@ -162,6 +163,14 @@ const emotions=()=>[...EMOTIONS,...customEmotions.map(x=>x.value)];
 const people=()=>[...PEOPLE,...customPeople.map(x=>x.value)];
 function slotMemo(i){if(i===0)return slots[0]?.meaning||"";if(i===1)return customEmotions.find(x=>x.value===slots[1])?.memo||"";return customPeople.find(x=>x.value===slots[2])?.memo||""}
 const persist=()=>localStorage.setItem("idea-slot:stocks",JSON.stringify(saved));
+
+function stockBlindArray(s){
+  return Array.isArray(s.blind) && s.blind.length===3 ? s.blind : [false,false,false];
+}
+function maskedValue(value,isBlind){
+  return isBlind ? "■■■" : (value||"—");
+}
+
 function formatStockDate(ts){
   if(!ts) return "";
   const d=new Date(ts);
@@ -268,7 +277,7 @@ function buildPlotPayload(){
 function activePlotCount(){
   return [0,1,2].filter(i=>slots[i] && !shuttered[i]).length;
 }
-function resetSlots(){slots=[null,null,null];held=[false,false,false];shuttered=[false,false,false];invalidateAI();render()}
+function resetSlots(){slots=[null,null,null];held=[false,false,false];shuttered=[false,false,false];storyTypeNow="";const stEl=document.getElementById("storyTypeValue");if(stEl)stEl.textContent="—";invalidateAI();render()}
 function toggleCustom(type){
  customType=type;
  const panel=document.getElementById("custom");
@@ -403,11 +412,21 @@ function keepIdea(){keptIdea=keptIdea===aiIdea?"":aiIdea;renderAI()}
 function openMemo(){editId=null;fillMemo("",keptIdea||aiIdea);show("memo")}
 function fillMemo(text,idea){
  const e=slots[1],ec="#ff6b9d";
- document.getElementById("combo").innerHTML=`<span class="tag" style="background:#00e5ff15;color:#00e5ff">${escapeText(slots[0].word)}</span>×<span class="tag" style="background:${ec}20;color:${ec}">${escapeText(e)}</span>×<span class="tag" style="background:#ffd93d15;color:#ffd93d">${escapeText(slots[2])}</span>`;
- document.getElementById("memo").value=text||"";document.getElementById("memoAIBox").style.display=idea?"block":"none";document.getElementById("memoAI").textContent=idea||"";
+ document.getElementById("combo").innerHTML=`<span class="tag" style="background:#ffd93d15;color:#ffd93d">${escapeText(maskedValue(slots[2],shuttered[2]))}</span>×<span class="tag" style="background:#00e5ff15;color:#00e5ff">${escapeText(maskedValue(slots[0].word,shuttered[0]))}</span>×<span class="tag" style="background:${ec}20;color:${ec}">${escapeText(maskedValue(e,shuttered[1]))}</span>`;
+ document.getElementById("memo").value=text||"";
+ const st=document.getElementById("memoStoryType");
+ if(st){
+   if(storyTypeNow){
+     st.style.display="block";
+     st.textContent=`STORY TYPE：${storyTypeNow}`;
+   }else{
+     st.style.display="none";
+     st.textContent="";
+   }
+ }document.getElementById("memoAIBox").style.display=idea?"block":"none";document.getElementById("memoAI").textContent=idea||"";
 }
 function saveMemo(){
- const data={word:slots[0].word,meaning:slots[0].meaning||"",emotion:slots[1],emotionMemo:slotMemo(1),person:slots[2],personMemo:slotMemo(2),memo:document.getElementById("memo").value,aiIdea:document.getElementById("memoAI").textContent||"",used:false};
+ const data={word:slots[0].word,meaning:slots[0].meaning||"",emotion:slots[1],emotionMemo:slotMemo(1),person:slots[2],personMemo:slotMemo(2),storyType:storyTypeNow||"",blind:[!!shuttered[0],!!shuttered[1],!!shuttered[2]],memo:document.getElementById("memo").value,aiIdea:document.getElementById("memoAI").textContent||"",used:false};
  if(editId){let i=saved.findIndex(x=>x.id===editId);if(i>=0)saved[i]={...saved[i],...data,used:saved[i].used};editId=null;persist();show("notes")}
  else{const now=Date.now();saved.push({id:now,createdAt:now,state:"SEED",used:false,...data});persist();show("slot")}
 }
@@ -419,18 +438,25 @@ function renderNotes(){
  const f=stockFilter==="ALL"?saved:saved.filter(s=>stateOf(s)===stockFilter);
  const bar=`<div class="filterbar">${["ALL","SEED","GROW","USED"].map(x=>`<button class="${stockFilter===x?"active":""}" onclick="setStockFilter('${x}')">${x} ${counts[x]}</button>`).join("")}</div>`;
  if(!f.length){list.innerHTML=bar+`<div style="text-align:center;color:#555;padding:50px 0">${saved.length?"この状態のSTOCKはありません":"まだストックがありません"}</div>`;return}
+
  list.innerHTML=bar+f.map(s=>{
   const st=stateOf(s),open=openStockId===s.id,date=formatStockDate(s.createdAt||s.id);
+  const blind=stockBlindArray(s);
+  const person=maskedValue(s.person,blind[2]);
+  const word=maskedValue(s.word,blind[0]);
+  const emotion=maskedValue(s.emotion,blind[1]);
+
   return `<div class="stock ${st==="USED"?"used":""} ${open?"open":""}" onclick="toggleStockOpen(${s.id},event)">
    <div class="stock-collapsed"><div class="pwe">
-    <span class="pwe-item" style="color:var(--gold)">${escapeText(s.person||"—")}</span><span class="sep">×</span>
-    <span class="pwe-item" style="color:var(--cyan)">${escapeText(s.word||"—")}</span><span class="sep">×</span>
-    <span class="pwe-item" style="color:var(--pink)">${escapeText(s.emotion||"—")}</span>
-   </div><span class="stock-state ${st.toLowerCase()}">${st==="USED"?"✓ USED":st}</span>${date?`<span class="stock-date">${date}</span>`:""}</div>
+    <span class="pwe-item" style="color:var(--gold)">${escapeText(person)}</span><span class="sep">×</span>
+    <span class="pwe-item" style="color:var(--cyan)">${escapeText(word)}</span><span class="sep">×</span>
+    <span class="pwe-item" style="color:var(--pink)">${escapeText(emotion)}</span>
+   </div><span class="stock-state ${st.toLowerCase()}">${st==="USED"?"✓ USED":st}</span>${date?`<span class="stock-date">${date}</span>`:""}${s.storyType?`<span class="stock-date" style="color:#7d7137">${escapeText(s.storyType)}</span>`:""}</div>
    <div class="stock-expanded">
-    ${s.meaning?`<div class="stockmemo"><div class="stocklabel">WORD MEMO</div>${escapeHTML(s.meaning)}</div>`:""}
-    ${s.personNote?`<div class="stockmemo"><div class="stocklabel">PERSON MEMO</div>${escapeHTML(s.personNote)}</div>`:""}
-    ${s.emotionNote?`<div class="stockmemo"><div class="stocklabel">EMOTION MEMO</div>${escapeHTML(s.emotionNote)}</div>`:""}
+    ${s.storyType?`<div class="stockmemo"><div class="stocklabel" style="color:#8f7d2f">STORY TYPE</div>${escapeHTML(s.storyType)}</div>`:""}
+    ${!blind[0]&&s.meaning?`<div class="stockmemo"><div class="stocklabel">WORD MEMO</div>${escapeHTML(s.meaning)}</div>`:""}
+    ${!blind[2]&&s.personMemo?`<div class="stockmemo"><div class="stocklabel">PERSON MEMO</div>${escapeHTML(s.personMemo)}</div>`:""}
+    ${!blind[1]&&s.emotionMemo?`<div class="stockmemo"><div class="stocklabel">EMOTION MEMO</div>${escapeHTML(s.emotionMemo)}</div>`:""}
     ${s.memo?`<div class="stockmemo"><div class="stocklabel">MEMO</div>${escapeHTML(s.memo)}</div>`:""}
     <div class="actions"><button class="load" onclick="loadStock(${s.id})">LOAD</button><button onclick="editStock(${s.id})">EDIT</button><button id="cp${s.id}" onclick="copyStock(${s.id})">COPY</button><button class="${st==="USED"?"usedon":""}" onclick="cycleState(${s.id})">${st} → ${st==="SEED"?"GROW":st==="GROW"?"USED":"SEED"}</button><button onclick="del(${s.id})">✕</button></div>
    </div></div>`
@@ -438,10 +464,10 @@ function renderNotes(){
 }
 function loadStock(id){
  const s=saved.find(x=>x.id===id);if(!s)return;let w=words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""};
- slots=[w,s.emotion,s.person];held=[true,true,true];shuttered=[false,false,false];aiIdea=s.aiIdea||"";keptIdea=aiIdea;previousIdeas=aiIdea?[aiIdea]:[];plotOpen=!!aiIdea;show("slot")
+ slots=[w,s.emotion,s.person];held=[true,true,true];storyTypeNow=s.storyType||"";const stEl=document.getElementById("storyTypeValue");if(stEl)stEl.textContent=storyTypeNow||"—";shuttered=stockBlindArray(s).slice();aiIdea=s.aiIdea||"";keptIdea=aiIdea;previousIdeas=aiIdea?[aiIdea]:[];plotOpen=!!aiIdea;show("slot")
 }
 function editStock(id){
- const s=saved.find(x=>x.id===id);if(!s)return;editId=id;slots=[words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""},s.emotion,s.person];fillMemo(s.memo,s.aiIdea);show("memo")
+ const s=saved.find(x=>x.id===id);if(!s)return;editId=id;slots=[words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""},s.emotion,s.person];storyTypeNow=s.storyType||"";const stEl=document.getElementById("storyTypeValue");if(stEl)stEl.textContent=storyTypeNow||"—";shuttered=stockBlindArray(s).slice();fillMemo(s.memo,s.aiIdea);show("memo")
 }
 function toggleUsed(id){let s=saved.find(x=>x.id===id);if(s){s.used=!s.used;openStockId=id;persist();renderNotes()}}
 function del(id){
@@ -459,39 +485,29 @@ function copyAllStocks(){
    alert("コピーするSTOCKがありません。");
    return;
  }
-
  const stateOf=s=>s.state||(s.used?"USED":"SEED");
-
- const text=saved.map((s,i)=>{
-   const lines=[];
-   lines.push(`#${i+1} ${s.person||"—"} × ${s.word||"—"} × ${s.emotion||"—"}`);
+ const allText=saved.map((s,i)=>{
+   const b=stockBlindArray(s),lines=[];
+   lines.push(`#${i+1} ${maskedValue(s.person,b[2])} × ${maskedValue(s.word,b[0])} × ${maskedValue(s.emotion,b[1])}`);
    lines.push(`STATE: ${stateOf(s)}`);
-
    const date=formatStockDate(s.createdAt||s.id);
    if(date) lines.push(`DATE: ${date}`);
-
-   if(s.meaning) lines.push(`WORD MEMO: ${s.meaning}`);
-   if(s.personNote) lines.push(`PERSON MEMO: ${s.personNote}`);
-   if(s.emotionNote) lines.push(`EMOTION MEMO: ${s.emotionNote}`);
+   if(s.storyType) lines.push(`STORY TYPE: ${s.storyType}`);
+   if(!b[2]&&s.personMemo) lines.push(`PERSON MEMO: ${s.personMemo}`);
+   if(!b[0]&&s.meaning) lines.push(`WORD MEMO: ${s.meaning}`);
+   if(!b[1]&&s.emotionMemo) lines.push(`EMOTION MEMO: ${s.emotionMemo}`);
    if(s.memo) lines.push(`MEMO:\n${s.memo}`);
-   if(s.aiIdea) lines.push(`AI IDEA:\n${s.aiIdea}`);
-
    return lines.join("\n");
  }).join("\n\n--------------------\n\n");
 
- navigator.clipboard.writeText(text).then(()=>{
+ navigator.clipboard.writeText(allText).then(()=>{
    const btn=document.getElementById("copyAllBtn");
    if(btn){
      btn.textContent="COPIED";
      btn.classList.add("copied");
-     setTimeout(()=>{
-       btn.textContent="全コピー";
-       btn.classList.remove("copied");
-     },1500);
+     setTimeout(()=>{btn.textContent="全コピー";btn.classList.remove("copied")},1500);
    }
- }).catch(()=>{
-   alert("コピーできませんでした。");
- });
+ }).catch(()=>alert("コピーできませんでした。"));
 }
 
 function clearAll(){
@@ -512,8 +528,15 @@ function clearAll(){
  renderNotes();
 }
 function copyStock(id){
- const s=saved.find(x=>x.id===id);let t=`${s.word} × ${s.emotion} × ${s.person}`;if(s.personMemo)t+=`\n${s.person}：${s.personMemo}`;if(s.meaning)t+=`\n${s.word}：${s.meaning}`;if(s.emotionMemo)t+=`\n${s.emotion}：${s.emotionMemo}`;if(s.memo)t+=`\n\nMEMO\n${s.memo}`;if(s.aiIdea)t+=`\n\nAI IDEA\n${s.aiIdea}`;
- navigator.clipboard.writeText(t).then(()=>{let b=document.getElementById("cp"+id);b.textContent="COPIED";setTimeout(()=>b.textContent="COPY",1200)})
+ const s=saved.find(x=>x.id===id);if(!s)return;
+ const b=stockBlindArray(s);
+ let t=`${maskedValue(s.person,b[2])} × ${maskedValue(s.word,b[0])} × ${maskedValue(s.emotion,b[1])}`;
+ if(s.storyType)t+=`\nSTORY TYPE：${s.storyType}`;
+ if(!b[2]&&s.personMemo)t+=`\n${s.person}：${s.personMemo}`;
+ if(!b[0]&&s.meaning)t+=`\n${s.word}：${s.meaning}`;
+ if(!b[1]&&s.emotionMemo)t+=`\n${s.emotion}：${s.emotionMemo}`;
+ if(s.memo)t+=`\n\nMEMO\n${s.memo}`;
+ navigator.clipboard.writeText(t).then(()=>{let btn=document.getElementById("cp"+id);if(btn){btn.textContent="COPIED";setTimeout(()=>btn.textContent="COPY",1200)}})
 }
 
 function randomDifferent(arr,current){const p=arr.filter(x=>x!==current);return p[Math.floor(Math.random()*p.length)]||arr[0]}
@@ -521,7 +544,7 @@ function showAssist(label,main,sub=""){const b=document.getElementById("ideaAssi
 function clearAssist(){wildcardNow="";shiftNow="";const b=document.getElementById("ideaAssist");if(b){b.classList.remove("show");b.innerHTML=""}}
 function addWildcard(){if(!slots.every(Boolean)||busy)return;wildcardNow=randomDifferent(WILDCARDS,wildcardNow);showAssist("＋1 / INTRUDER",wildcardNow,"今の3語に、これだけ追加して考える")}
 function shiftView(){if(!slots.every(Boolean)||busy)return;shiftNow=randomDifferent(SHIFT_VIEWS,shiftNow);showAssist("SHIFT / VIEWPOINT",shiftNow,"3語はそのまま。見る角度だけ変える")}
-function revisitSeed(){const c=saved.filter(s=>(s.state||(s.used?"USED":"SEED"))!=="USED");if(!c.length){showAssist("REVISIT","再会できる未使用STOCKがありません","SEED / GROWを保存すると、ここに戻ってきます");return}const s=c[Math.floor(Math.random()*c.length)];showAssist("REVISIT",`${s.person||"—"} × ${s.word||"—"} × ${s.emotion||"—"}`,formatStockDate(s.createdAt||s.id)+" の種")}
+function revisitSeed(){const c=saved.filter(s=>(s.state||(s.used?"USED":"SEED"))!=="USED");if(!c.length){showAssist("REVISIT","再会できる未使用STOCKがありません","SEED / GROWを保存すると、ここに戻ってきます");return}const s=c[Math.floor(Math.random()*c.length)],b=stockBlindArray(s);showAssist("REVISIT",`${maskedValue(s.person,b[2])} × ${maskedValue(s.word,b[0])} × ${maskedValue(s.emotion,b[1])}`,formatStockDate(s.createdAt||s.id)+" の種")}
 function cycleState(id){const s=saved.find(x=>x.id===id);if(!s)return;const c=s.state||(s.used?"USED":"SEED");s.state=c==="SEED"?"GROW":c==="GROW"?"USED":"SEED";s.used=s.state==="USED";openStockId=id;persist();renderNotes()}
 function setStockFilter(v){stockFilter=v;renderNotes()}
 
