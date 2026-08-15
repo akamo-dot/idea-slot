@@ -15,7 +15,7 @@ body{padding:env(safe-area-inset-top) 20px env(safe-area-inset-bottom);max-width
 button,textarea,input{font:inherit}button{cursor:pointer}
 .screen{display:none;min-height:100dvh;flex-direction:column}.screen.active{display:flex}
 .header{text-align:center;padding-top:14px}.header h1{font-size:14px;letter-spacing:6px;color:#444;margin:0}
-.slots{display:flex;gap:10px;margin:24px 0 10px}.slot{flex:1;min-width:0;text-align:center}.label{font-size:10px;font-weight:800;letter-spacing:2px;opacity:.7;margin-bottom:6px}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:24px 0 10px}.slot{min-width:0;text-align:center}.label{font-size:10px;font-weight:800;letter-spacing:2px;opacity:.7;margin-bottom:6px}
 .box{height:90px;border:2px solid;border-radius:12px;background:var(--surface);display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden;position:relative;cursor:pointer;transition:.25s}.box.shuttered:after{content:"";position:absolute;z-index:5;inset:-3px;background:#202027;transform:translateY(0);animation:shutter .18s ease-out;border-radius:12px}.box.shuttered:before{content:"";position:absolute;z-index:6;left:-3px;right:-3px;top:50%;height:2px;background:#2b2b33;box-shadow:0 -22px 0 #2b2b33,0 22px 0 #2b2b33}@keyframes shutter{from{transform:translateY(-105%)}to{transform:translateY(0)}}to{transform:translateY(0)}}
 .val{font-size:24px;font-weight:900;line-height:1.15}.hold{margin-top:8px;width:100%;min-height:38px;padding:9px 6px;border-radius:9px;border:1px solid #2d2d3d;background:#11111b;color:#666;font-size:12px;font-weight:900;letter-spacing:2px;transition:.2s}
 .meaning{min-height:34px;text-align:center;color:#00e5ff80;font-size:12px}.meaning span{display:inline-block;background:#00e5ff08;padding:8px 12px;border-radius:8px}
@@ -28,8 +28,7 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 .row{display:flex;gap:10px;margin-top:10px}.sub{flex:1;padding:14px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:#444;font-weight:800;letter-spacing:3px;position:relative}
 .badge{position:absolute;right:-6px;top:-6px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:var(--gold);color:#000;font-size:11px}
 .reset{text-align:center;margin-top:12px}.reset button{border:0;background:transparent;color:#333;font-size:10px;letter-spacing:3px}
-.custom-toggle{border:0;background:transparent;color:#345a61;font-size:9px;margin-top:5px}.custom{display:none;background:#0d0d18;border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:12px}.custom.show{display:block}
-.custom input{width:100%;margin-bottom:7px;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:#ddd}.custom-actions{display:flex;gap:8px}.custom-actions button{flex:1;padding:9px;border-radius:8px;font-weight:800}.custom button{width:100%;padding:9px;border:0;border-radius:8px;background:#00e5ff15;color:var(--cyan);font-weight:800}
+.custom.show{display:block}
 .back{border:0;background:transparent;color:#666;text-align:left;padding:16px 0}.combo{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:18px}.tag{padding:6px 12px;border-radius:8px;font-weight:800}
 .memobox{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}.memobox label{display:block;font-size:10px;color:#555;font-weight:900;letter-spacing:1px;margin-bottom:8px}
 .memobox textarea{width:100%;border:0;outline:0;resize:vertical;background:transparent;color:#ccc;font-size:14px;line-height:1.7}
@@ -59,13 +58,6 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 .filterbar{display:flex;gap:6px;margin-bottom:14px}.filterbar button{flex:1;padding:8px 3px;border:1px solid #222233;border-radius:8px;color:#555;font-size:9px;font-weight:900}.filterbar button.active{border-color:#555;color:#bbb;background:#151520}
 
 .hold.is-held{background:rgba(255,255,255,.04);box-shadow:0 0 12px rgba(255,255,255,.04)}
-.story-type-wrap{margin-top:16px;padding:14px;border:1px solid #222235;border-radius:12px;background:#0d0d17}
-.story-type-label{font-size:10px;font-weight:900;letter-spacing:2px;color:#666;margin-bottom:8px}
-.story-type-value{min-height:44px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#f0f0f5;letter-spacing:1px}
-.story-type-btn{width:100%;margin-top:10px;padding:12px;border-radius:10px;border:1px solid #ffd93d44;background:#ffd93d0d;color:#ffd93d;font-size:12px;font-weight:900;letter-spacing:2px}
-.story-type-btn:active{transform:scale(.99)}
-
-
 .note-bottom-actions{display:flex;gap:10px;margin:12px 0 25px}
 .note-bottom-actions .clear{flex:1;margin:0}
 .copy-all{flex:1;padding:10px;border:1px solid #2f2f48;border-radius:8px;background:transparent;color:#8f72ff;font-size:13px;font-weight:800;letter-spacing:1px}
@@ -73,6 +65,120 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 
 
 .slot-box .val{font-weight:900!important}
+
+/* v20: 4 reels in a 2x2 grid for better mobile readability */
+.slots{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:14px 10px!important;
+  margin:24px 0 10px!important;
+}
+.slot{
+  min-width:0!important;
+  width:100%!important;
+}
+.box{
+  width:100%!important;
+}
+.box .val{
+  font-weight:900!important;
+  font-size:24px;
+  overflow-wrap:anywhere;
+}
+
+
+.slot-memo-btn{
+  margin-top:6px;
+  width:100%;
+  min-height:30px;
+  padding:6px 4px;
+  border:1px solid #242436;
+  border-radius:7px;
+  background:#0e0e18;
+  color:#575766;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:1.5px;
+}
+.slot-memo-btn.has-memo{
+  color:#c8c8d4;
+  border-color:#45455b;
+}
+.slot-memo-btn:disabled{
+  opacity:.22;
+  cursor:default;
+}
+.slot-memo-panel{
+  display:none;
+  margin:0 0 12px;
+  padding:12px;
+  border:1px solid #252538;
+  border-radius:10px;
+  background:#0d0d18;
+}
+.slot-memo-panel.show{display:block}
+.slot-memo-title{
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:1.5px;
+  color:#777;
+  margin-bottom:8px;
+}
+.slot-memo-panel textarea{
+  width:100%;
+  resize:vertical;
+  border:1px solid #242436;
+  border-radius:8px;
+  outline:none;
+  padding:10px;
+  background:#11111c;
+  color:#ddd;
+  font-size:13px;
+  line-height:1.6;
+}
+.slot-memo-actions{display:flex;gap:8px;margin-top:8px}
+.slot-memo-actions button{
+  flex:1;
+  padding:9px 6px;
+  border:1px solid #2b2b3d;
+  border-radius:8px;
+  background:#141420;
+  color:#888;
+  font-size:10px;
+  font-weight:900;
+}
+.meaning{
+  min-height:34px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+
+.slot-original-input{
+  width:100%;
+  margin-bottom:8px;
+  padding:10px;
+  border:1px solid #2b2b3d;
+  border-radius:8px;
+  outline:none;
+  background:#11111c;
+  color:#ddd;
+  font-size:13px;
+}
+.slot-original-input::placeholder{color:#555}
+.slot-memo-actions{display:grid;grid-template-columns:1.25fr 1fr .8fr;gap:7px;margin-top:8px}
+.slot-memo-actions .slot-add-original{
+  color:#00e5ff;
+  border-color:#00e5ff40;
+  background:#00e5ff0b;
+}
+
+
+.slots .slot{display:flex;flex-direction:column}
+.slots .slot .hold{margin-top:8px}
+.slots .slot .slot-memo-btn{margin-top:6px}
+
 </style>
 </head>
 <body>
@@ -80,11 +186,37 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 <section id="slotScreen" class="screen active">
 <div class="header"><h1>IDEA SLOT</h1></div>
 <div class="slots">
-  <div class="slot"><div class="label" id="lab2" style="color:var(--gold)">PERSON</div><div class="box" id="box2" onclick="toggleShutter(2)" style="border-color:#ffd93d40"><div class="val" id="v2">—</div></div><button class="hold" id="h2" onclick="toggleHold(2)">HOLD</button><br><button class="custom-toggle" onclick="toggleCustom(2)">+ PERSON</button></div>
-  <div class="slot"><div class="label" id="lab0" style="color:var(--cyan)">WORD</div><div class="box" id="box0" onclick="toggleShutter(0)" style="border-color:#00e5ff40"><div class="val" id="v0">—</div></div><button class="hold" id="h0" onclick="toggleHold(0)">HOLD</button><br><button class="custom-toggle" onclick="toggleCustom(0)">+ WORD</button></div>
-  <div class="slot"><div class="label" id="lab1" style="color:var(--pink)">EMOTION</div><div class="box" id="box1" onclick="toggleShutter(1)" style="border-color:#ff6b9d40"><div class="val" id="v1">—</div></div><button class="hold" id="h1" onclick="toggleHold(1)">HOLD</button><br><button class="custom-toggle" onclick="toggleCustom(1)">+ EMOTION</button></div>
+  <div class="slot">
+    <div class="label" id="lab2" style="color:var(--gold)">PERSON</div>
+    <div class="box" id="box2" onclick="toggleShutter(2)" style="border-color:#ffd93d40"><div class="val" id="v2">—</div></div>
+    <button class="hold" id="h2" onclick="toggleHold(2)">HOLD</button><button class="slot-memo-btn" id="sm2" onclick="openSlotMemo(2)">MEMO</button>
+  </div>
+  <div class="slot">
+    <div class="label" id="lab0" style="color:var(--cyan)">WORD</div>
+    <div class="box" id="box0" onclick="toggleShutter(0)" style="border-color:#00e5ff40"><div class="val" id="v0">—</div></div>
+    <button class="hold" id="h0" onclick="toggleHold(0)">HOLD</button><button class="slot-memo-btn" id="sm0" onclick="openSlotMemo(0)">MEMO</button>
+  </div>
+  <div class="slot">
+    <div class="label" id="lab1" style="color:var(--pink)">EMOTION</div>
+    <div class="box" id="box1" onclick="toggleShutter(1)" style="border-color:#ff6b9d40"><div class="val" id="v1">—</div></div>
+    <button class="hold" id="h1" onclick="toggleHold(1)">HOLD</button><button class="slot-memo-btn" id="sm1" onclick="openSlotMemo(1)">MEMO</button>
+  </div>
+  <div class="slot">
+    <div class="label" id="lab3" style="color:#c7a8ff">STORY TYPE</div>
+    <div class="box" id="box3" onclick="toggleShutter(3)" style="border-color:#c7a8ff40"><div class="val" id="v3">—</div></div>
+    <button class="hold" id="h3" onclick="toggleHold(3)">HOLD</button><button class="slot-memo-btn" id="sm3" onclick="openSlotMemo(3)">MEMO</button>
+  </div>
 </div>
-<div id="custom" class="custom"><input id="cw" placeholder="追加する内容"><input id="cm" placeholder="意味・背景メモ（任意）"><div class="custom-actions"><button id="customAddBtn" onclick="addCustom()">ADD & HOLD</button><button onclick="closeCustom()" style="background:transparent;color:#666;border:1px solid #2a2a35">CANCEL</button></div></div>
+<div id="slotMemoPanel" class="slot-memo-panel">
+  <div id="slotMemoTitle" class="slot-memo-title">MEMO / ORIGINAL</div>
+  <input id="slotOriginalText" class="slot-original-input" placeholder="オリジナルをリールに追加（任意）">
+  <textarea id="slotMemoText" rows="4" placeholder="この要素についてのメモ..."></textarea>
+  <div class="slot-memo-actions">
+    <button class="slot-add-original" onclick="addOriginalFromMemo()">ADD & HOLD</button>
+    <button onclick="saveSlotMemo()">SAVE MEMO</button>
+    <button onclick="closeSlotMemo()">CANCEL</button>
+  </div>
+</div>
 <div class="meaning" id="meaning"></div>
 
 <!-- 操作ボタンは常に同じ位置 -->
@@ -98,14 +230,6 @@ button,textarea,input{font:inherit}button{cursor:pointer}
  <button class="idea-tool" onclick="revisitSeed()">REVISIT</button>
 </div>
 <div id="ideaAssist" class="idea-assist"></div>
-
-<div class="story-type-wrap">
-  <div class="story-type-label">STORY TYPE</div>
-  <div id="storyTypeValue" class="story-type-value">—</div>
-  <button class="story-type-btn" onclick="spinStoryType()">ROULETTE</button>
-</div>
-
-
 <!-- PLOTは操作ボタンの下。開閉してもSTART位置は動かない -->
 <div class="spacer"></div>
 <div class="reset"><button onclick="resetSlots()">RESET</button></div>
@@ -137,13 +261,15 @@ const BASE_WORDS=[
 
 const EMOTIONS=["喜び","悲しみ","怒り","恐怖","驚き","嫌悪","幸福","安心","期待","希望","欲望","好奇心","興奮","高揚","ワクワク","憧れ","愛情","恋","慈しみ","親近感","信頼","尊敬","感謝","共感","嫉妬","羨望","憎しみ","軽蔑","疑い","不信","恨み","誇り","優越感","劣等感","羞恥","罪悪感","後悔","自己嫌悪","達成感","無力感","寂しさ","孤独","切なさ","喪失感","疎外感","懐かしさ","未練","諦め","不安","焦り","緊張","困惑","戸惑い","違和感","不穏","絶望","執着","依存","葛藤","迷い","もどかしさ","焦燥","安堵","満足","穏やかさ","退屈","倦怠","無感情","虚無","諦観","爽快","解放感","陶酔","快感","緊張からの解放","ゾクゾク","感動","ほっこり","気まずさ","くだらなさ","笑い","嬉しいのに悲しい","怖いのに見たい","嫌いなのに気になる","愛しているのに憎い","安心したのに寂しい","成功したのに虚しい","失ったのにほっとする","恥ずかしいのに嬉しい","懐かしいのに怖い","羨ましいのに応援したい","許したいのに許せない","帰りたいのに帰りたくない","終わってほしいのに終わってほしくない"];
 const PEOPLE=["赤ちゃん","幼児","小学生","中学生","高校生","大学生","若者","新人","中年","老人","100歳の老人","母親","父親","夫","妻","息子","娘","兄","姉","弟","妹","祖父","祖母","孫","双子","一人っ子","シングルマザー","シングルファザー","新婚夫婦","離婚した夫婦","恋人","元恋人","片思いの人","幼なじみ","親友","友人","隣人","同級生","元同級生","知らない人","学生","教師","校長","保育士","教授","転校生","留学生","不登校の生徒","会社員","新人社員","上司","部下","社長","人事担当","営業マン","経理担当","受付","退職した会社員","失業者","デザイナー","エンジニア","プログラマー","作家","漫画家","画家","写真家","音楽家","俳優","芸人","アイドル","ユーチューバー","配信者","インフルエンサー","医師","看護師","歯科医","薬剤師","介護士","カウンセラー","患者","余命宣告された人","警察官","消防士","救急隊員","裁判官","弁護士","政治家","首脳","官僚","市長","駅員","運転手","審判","料理人","美容師","店員","配達員","清掃員","警備員","農家","漁師","猟師","大工","職人","研究者","科学者","バスガイド","占い師","僧侶","ホームレス","観光客","迷子","移住者","囚人","元囚人","借金を抱えた人","大富豪","無職","家出した人","泥棒","詐欺師","殺し屋","スパイ","探偵","ハッカー","逃亡者","記憶喪失の人","嘘をつけない人","眠れない人","声を失った人","顔を忘れた人","最後の人類","世界で一人だけの人","自分の死を知っている人","忍者","海賊","侍","王","女王","勇者","魔王","魔法使い","宇宙飛行士","宇宙人","未来人","過去の人","クローン","AI","アンドロイド","ロボット","自分そっくりのAI","未来の自分","過去の自分","幽霊","神","悪魔","天使","人魚","怪獣","吸血鬼","死神","犬","猫","カラス","蚊","ゴキブリ","虫","魚","植物","恐竜","家族","夫婦","クラス全員","会社全員","村人","観客","ファン","人類"];
-const C=["#00e5ff","#ff6b9d","#ffd93d"];
+const C=["#00e5ff","#ff6b9d","#ffd93d","#c7a8ff"];
 
 let custom=JSON.parse(localStorage.getItem("idea-slot:custom")||"[]");
 let customEmotions=JSON.parse(localStorage.getItem("idea-slot:custom-emotions")||"[]");
 let customPeople=JSON.parse(localStorage.getItem("idea-slot:custom-people")||"[]");
-let customType=0;
-let saved=JSON.parse(localStorage.getItem("idea-slot:stocks")||"[]").map(s=>({...s,createdAt:s.createdAt||s.id||null,used:!!s.used,state:s.state||(s.used?"USED":"SEED"),blind:Array.isArray(s.blind)&&s.blind.length===3?s.blind:[false,false,false]}));
+let customStoryTypes=JSON.parse(localStorage.getItem("idea-slot:custom-story-types")||"[]");
+let slotUserMemos=JSON.parse(localStorage.getItem("idea-slot:slot-memos")||'{"0":{},"1":{},"2":{},"3":{}}');
+let editingSlotMemoIndex=null;
+let saved=JSON.parse(localStorage.getItem("idea-slot:stocks")||"[]").map(s=>({...s,createdAt:s.createdAt||s.id||null,used:!!s.used,state:s.state||(s.used?"USED":"SEED"),blind:Array.isArray(s.blind)&&s.blind.length===4?s.blind:[false,false,false,false]}));
 
 
 const STORY_TYPES=["SF","ファンタジー","ミステリー","サスペンス","ホラー","コメディ","恋愛","青春","ヒューマンドラマ","アクション","アドベンチャー","近未来SF","ディストピア","ユートピア","タイムトラベル","宇宙SF","サイバーパンク","ポストアポカリプス","推理","犯罪","クライム","スリラー","法廷","復讐","怪談","オカルト","心理ホラー","パニック","家族","仕事","日常","社会派","医療","スポーツ","歴史","時代劇","ブラックコメディ","風刺","ナンセンス","パロディ","寓話","童話","群像劇"];
@@ -152,17 +278,34 @@ let storyTypeNow="";
 const WILDCARDS=["宇宙","コンビニ","病院","学校","葬式","結婚式","裁判所","電車","海","月","地下","100年後","昨日","最後の日","無人島","老人ホーム","SNS","夢","祭り","会社","家族","お金","法律","ランキング","サブスク","レンタル","中古","無料","禁止","税金","保険","匂い","音","体温","名前","記憶","睡眠","食事","ゴミ","天気","鏡","写真","手紙"];
 const SHIFT_VIEWS=["過去","現在","未来","家庭","会社","社会","子どもの目","老人の目","日本","海外","宇宙","日常","制度","極端","逆の立場","犯罪","恋愛","仕事","商売","教育","身体","死後","100年後","誰にも知られない場所","全員が知っている世界"];
 let wildcardNow="",shiftNow="",stockFilter="ALL";
-let slots=[null,null,null],held=[false,false,false],shuttered=[false,false,false],busy=false,editId=null;
+let slots=[null,null,null,null],held=[false,false,false,false],shuttered=[false,false,false,false],busy=false,editId=null;
 let aiIdea="",keptIdea="",previousIdeas=[],plotOpen=false;
 
 const words=()=>[...BASE_WORDS,...custom];
 const emotions=()=>[...EMOTIONS,...customEmotions.map(x=>x.value)];
 const people=()=>[...PEOPLE,...customPeople.map(x=>x.value)];
-function slotMemo(i){if(i===0)return slots[0]?.meaning||"";if(i===1)return customEmotions.find(x=>x.value===slots[1])?.memo||"";return customPeople.find(x=>x.value===slots[2])?.memo||""}
+const storyTypes=()=>[...STORY_TYPES,...customStoryTypes.map(x=>x.value)];
+function slotKey(i){
+ if(i===0) return slots[0]?.word||"";
+ return slots[i]||"";
+}
+function slotMemo(i){
+ const key=slotKey(i);
+ if(!key)return "";
+ const userMemo=slotUserMemos?.[String(i)]?.[key];
+ if(userMemo!==undefined)return userMemo;
+
+ // 過去データとの互換
+ if(i===0)return "";
+ if(i===1)return customEmotions.find(x=>x.value===slots[1])?.memo||"";
+ if(i===2)return customPeople.find(x=>x.value===slots[2])?.memo||"";
+ if(i===3)return customStoryTypes.find(x=>x.value===slots[3])?.memo||"";
+ return "";
+}
 const persist=()=>localStorage.setItem("idea-slot:stocks",JSON.stringify(saved));
 
 function stockBlindArray(s){
-  return Array.isArray(s.blind) && s.blind.length===3 ? s.blind : [false,false,false];
+  return Array.isArray(s.blind) && s.blind.length===4 ? s.blind : [false,false,false,false];
 }
 function maskedValue(value,isBlind){
   return isBlind ? "■■■" : (value||"—");
@@ -189,21 +332,115 @@ const val=i=>i===0?(slots[0]?.word||"—"):(slots[i]||"—");
 const pick=(a,current)=>{let b=a.filter(x=>x!==current);if(!b.length)b=a;return b[Math.floor(Math.random()*b.length)]};
 const pickW=()=>{let a=words().filter(x=>x.word!==slots[0]?.word);return a[Math.floor(Math.random()*a.length)]};
 
+
+function openSlotMemo(i){
+ if(busy)return;
+ editingSlotMemoIndex=i;
+ const names=["WORD","EMOTION","PERSON","STORY TYPE"];
+ const current=i===0?(slots[0]?.word||""):(slots[i]||"");
+ const title=document.getElementById("slotMemoTitle");
+ const area=document.getElementById("slotMemoText");
+ const original=document.getElementById("slotOriginalText");
+ title.textContent=current?`${names[i]} MEMO：${current}`:`${names[i]} / ORIGINAL`;
+ original.value="";
+ original.placeholder=`オリジナルの${names[i]}を追加（任意）`;
+ area.value=current?(slotMemo(i)||""):"";
+ document.getElementById("slotMemoPanel").classList.add("show");
+ (current?area:original).focus();
+}
+function closeSlotMemo(){
+ editingSlotMemoIndex=null;
+ const panel=document.getElementById("slotMemoPanel");
+ if(panel)panel.classList.remove("show");
+ const original=document.getElementById("slotOriginalText");if(original)original.value="";
+}
+
+function addOriginalFromMemo(){
+ if(editingSlotMemoIndex===null||busy)return;
+
+ const i=editingSlotMemoIndex;
+ const v=document.getElementById("slotOriginalText").value.trim();
+ const memo=document.getElementById("slotMemoText").value.trim();
+ if(!v)return;
+
+ if(i===0){
+   let obj=words().find(x=>x.word===v);
+   if(!obj){
+     obj={word:v,meaning:memo};
+     custom.push(obj);
+     localStorage.setItem("idea-slot:custom",JSON.stringify(custom));
+   }else if(obj && custom.includes(obj) && memo && !obj.meaning){
+     obj.meaning=memo;
+     localStorage.setItem("idea-slot:custom",JSON.stringify(custom));
+   }
+   slots[0]=obj;
+ }else if(i===1){
+   if(!customEmotions.some(x=>x.value===v)){
+     customEmotions.push({value:v,memo});
+     localStorage.setItem("idea-slot:custom-emotions",JSON.stringify(customEmotions));
+   }
+   slots[1]=v;
+ }else if(i===2){
+   if(!customPeople.some(x=>x.value===v)){
+     customPeople.push({value:v,memo});
+     localStorage.setItem("idea-slot:custom-people",JSON.stringify(customPeople));
+   }
+   slots[2]=v;
+ }else{
+   if(!customStoryTypes.some(x=>x.value===v)){
+     customStoryTypes.push({value:v,memo});
+     localStorage.setItem("idea-slot:custom-story-types",JSON.stringify(customStoryTypes));
+   }
+   slots[3]=v;
+   storyTypeNow=v;
+ }
+
+ if(!slotUserMemos[String(i)])slotUserMemos[String(i)]={};
+ if(memo)slotUserMemos[String(i)][v]=memo;
+ else delete slotUserMemos[String(i)][v];
+ localStorage.setItem("idea-slot:slot-memos",JSON.stringify(slotUserMemos));
+
+ held[i]=true;
+ shuttered[i]=false;
+ closeSlotMemo();
+ invalidateAI();
+ render();
+}
+
+function saveSlotMemo(){
+ if(editingSlotMemoIndex===null)return;
+ const i=editingSlotMemoIndex;
+ const key=slotKey(i);
+ if(!key)return;
+ const value=document.getElementById("slotMemoText").value.trim();
+ if(!slotUserMemos[String(i)])slotUserMemos[String(i)]={};
+ if(value)slotUserMemos[String(i)][key]=value;
+ else delete slotUserMemos[String(i)][key];
+ localStorage.setItem("idea-slot:slot-memos",JSON.stringify(slotUserMemos));
+ closeSlotMemo();
+ render();
+}
 function render(){
- for(let i=0;i<3;i++){
+ for(let i=0;i<4;i++){
    const v=document.getElementById("v"+i),b=document.getElementById("box"+i),h=document.getElementById("h"+i),l=document.getElementById("lab"+i);
    v.textContent=val(i);v.style.fontSize=val(i).length>5?"18px":"24px";
    b.style.borderColor=held[i]?C[i]:C[i]+"40";b.style.boxShadow=held[i]?`0 0 16px ${C[i]}30`:"none";
-   l.innerHTML=(held[i]?"● ":"")+["WORD","EMOTION","PERSON"][i];h.disabled=!slots[i]||busy;h.textContent="HOLD";h.style.color=held[i]?C[i]:"#666";h.classList.toggle("is-held",held[i]);h.style.borderColor=held[i]?C[i]+"88":"#2d2d3d";b.classList.toggle("shuttered",shuttered[i]);
+   l.innerHTML=(held[i]?"● ":"")+["WORD","EMOTION","PERSON","STORY TYPE"][i];h.disabled=!slots[i]||busy;h.textContent="HOLD";h.style.color=held[i]?C[i]:"#666";h.classList.toggle("is-held",held[i]);h.style.borderColor=held[i]?C[i]+"88":"#2d2d3d";b.classList.toggle("shuttered",shuttered[i]);
+   const mb=document.getElementById("sm"+i);
+   if(mb){
+     mb.disabled=busy;
+     mb.classList.toggle("has-memo",!!slotMemo(i));
+   }
  }
- const notes=[];if(slotMemo(2))notes.push(`PERSON：${escapeText(slotMemo(2))}`);if(slotMemo(0))notes.push(`WORD：${escapeText(slotMemo(0))}`);if(slotMemo(1))notes.push(`EMOTION：${escapeText(slotMemo(1))}`);document.getElementById("meaning").innerHTML=notes.length?`<span>${notes.join("　/　")}</span>`:"";
+ const wordMeaning=(slots[0]&&!shuttered[0])?(slots[0].meaning||""):"";
+ document.getElementById("meaning").innerHTML=wordMeaning?`<span>${escapeText(slots[0].word)}：${escapeText(wordMeaning)}</span>`:"";
  const all=held.every(Boolean);
  const sb=document.getElementById("startBtn");sb.disabled=busy||all;sb.textContent=busy?"...":all?"ALL HELD":"START";sb.style.opacity=sb.disabled?.35:1;
  document.getElementById("saveBtn").disabled=busy||!slots.every(Boolean);
  document.getElementById("saveBtn").style.color=(!busy&&slots.every(Boolean))?"var(--purple)":"#444";
  const pbtn=document.getElementById("plotBtn");if(pbtn)pbtn.disabled=busy||!slots.every(Boolean)||activePlotCount()===0;
  const nb=document.getElementById("noteBtn");nb.innerHTML="NOTE"+(saved.length?`<span class="badge">${saved.length}</span>`:"");nb.style.color=saved.length?"var(--gold)":"#444";
- document.getElementById("stats").textContent=`${words().length}w · ${emotions().length}e · ${people().length}p`;
+ document.getElementById("stats").textContent=`${words().length}w · ${emotions().length}e · ${people().length}p · ${storyTypes().length}t`;
  renderAI();
  const ideaReady=slots.every(Boolean)&&!busy;
  const pb=document.getElementById("plusBtn"),shb=document.getElementById("shiftBtn");if(pb)pb.disabled=!ideaReady;if(shb)shb.disabled=!ideaReady;
@@ -220,13 +457,14 @@ async function spin(){
  try{
    const targets=[
      held[0]?slots[0]:pickW(),
-     held[1]?slots[1]:pick(EMOTIONS,slots[1]),
-     held[2]?slots[2]:pick(PEOPLE,slots[2])
+     held[1]?slots[1]:pick(emotions(),slots[1]),
+     held[2]?slots[2]:pick(people(),slots[2]),
+     held[3]?slots[3]:pick(storyTypes(),slots[3])
    ];
 
-   // PERSON → WORD → EMOTION の順に停止
-   const order=[2,0,1];
-   const lists=[words().map(x=>x.word),EMOTIONS,PEOPLE];
+   // PERSON → WORD → EMOTION → STORY TYPE
+   const order=[2,0,1,3];
+   const lists=[words().map(x=>x.word),emotions(),people(),storyTypes()];
 
    for(const i of order){
      if(held[i]) continue;
@@ -237,13 +475,14 @@ async function spin(){
        el.textContent=arr[Math.floor(Math.random()*arr.length)];
      },65);
 
-     await wait(550);
+     await wait(500);
      clearInterval(timer);
      slots[i]=targets[i];
      render();
    }
 
    slots=targets;
+   storyTypeNow=slots[3]||"";
  }finally{
    busy=false;
    render();
@@ -274,30 +513,7 @@ function buildPlotPayload(){
 function activePlotCount(){
   return [0,1,2].filter(i=>slots[i] && !shuttered[i]).length;
 }
-function resetSlots(){slots=[null,null,null];held=[false,false,false];shuttered=[false,false,false];storyTypeNow="";const stEl=document.getElementById("storyTypeValue");if(stEl)stEl.textContent="—";invalidateAI();render()}
-function toggleCustom(type){
- customType=type;
- const panel=document.getElementById("custom");
- panel.classList.toggle("show");
- const names=["WORD","EMOTION","PERSON"];
- document.getElementById("cw").placeholder=`自分の${names[type]}`;
- document.getElementById("cm").placeholder="意味・背景メモ（任意）";
-}
-function closeCustom(){document.getElementById("custom").classList.remove("show")}
-function addCustom(){
- const v=document.getElementById("cw").value.trim(),m=document.getElementById("cm").value.trim();if(!v)return;
- if(customType===0){
-   let obj=words().find(x=>x.word===v);if(!obj){obj={word:v,meaning:m};custom.push(obj);localStorage.setItem("idea-slot:custom",JSON.stringify(custom))}
-   slots[0]=obj;held[0]=true;
- }else if(customType===1){
-   if(!customEmotions.some(x=>x.value===v)){customEmotions.push({value:v,memo:m});localStorage.setItem("idea-slot:custom-emotions",JSON.stringify(customEmotions))}
-   slots[1]=v;held[1]=true;
- }else{
-   if(!customPeople.some(x=>x.value===v)){customPeople.push({value:v,memo:m});localStorage.setItem("idea-slot:custom-people",JSON.stringify(customPeople))}
-   slots[2]=v;held[2]=true;
- }
- document.getElementById("cw").value="";document.getElementById("cm").value="";closeCustom();invalidateAI();render();
-}
+function resetSlots(){slots=[null,null,null,null];held=[false,false,false,false];shuttered=[false,false,false,false];storyTypeNow="";invalidateAI();render()}
 
 /* AI hook:
    現在は端末内モック。GitHub Pagesに秘密APIキーは置かない。
@@ -409,21 +625,32 @@ function keepIdea(){keptIdea=keptIdea===aiIdea?"":aiIdea;renderAI()}
 function openMemo(){editId=null;fillMemo("",keptIdea||aiIdea);show("memo")}
 function fillMemo(text,idea){
  const e=slots[1],ec="#ff6b9d";
- document.getElementById("combo").innerHTML=`<span class="tag" style="background:#ffd93d15;color:#ffd93d">${escapeText(maskedValue(slots[2],shuttered[2]))}</span>×<span class="tag" style="background:#00e5ff15;color:#00e5ff">${escapeText(maskedValue(slots[0].word,shuttered[0]))}</span>×<span class="tag" style="background:${ec}20;color:${ec}">${escapeText(maskedValue(e,shuttered[1]))}</span>`;
+ document.getElementById("combo").innerHTML=`<span class="tag" style="background:#ffd93d15;color:#ffd93d">${escapeText(maskedValue(slots[2],shuttered[2]))}</span>×<span class="tag" style="background:#00e5ff15;color:#00e5ff">${escapeText(maskedValue(slots[0].word,shuttered[0]))}</span>×<span class="tag" style="background:${ec}20;color:${ec}">${escapeText(maskedValue(e,shuttered[1]))}</span>×<span class="tag" style="background:#c7a8ff15;color:#c7a8ff">${escapeText(maskedValue(slots[3],shuttered[3]))}</span>`;
  document.getElementById("memo").value=text||"";
  const st=document.getElementById("memoStoryType");
  if(st){
-   if(storyTypeNow){
-     st.style.display="block";
-     st.textContent=`STORY TYPE：${storyTypeNow}`;
-   }else{
+   if(false){
      st.style.display="none";
      st.textContent="";
    }
  }document.getElementById("memoAIBox").style.display=idea?"block":"none";document.getElementById("memoAI").textContent=idea||"";
 }
 function saveMemo(){
- const data={word:slots[0].word,meaning:slots[0].meaning||"",emotion:slots[1],emotionMemo:slotMemo(1),person:slots[2],personMemo:slotMemo(2),storyType:storyTypeNow||"",blind:[!!shuttered[0],!!shuttered[1],!!shuttered[2]],memo:document.getElementById("memo").value,aiIdea:document.getElementById("memoAI").textContent||"",used:false};
+ const data={
+   word:slots[0].word,
+   meaning:slots[0].meaning||"",
+   wordMemo:slotMemo(0),
+   emotion:slots[1],
+   emotionMemo:slotMemo(1),
+   person:slots[2],
+   personMemo:slotMemo(2),
+   storyType:slots[3]||storyTypeNow||"",
+   storyTypeMemo:slotMemo(3),
+   blind:[!!shuttered[0],!!shuttered[1],!!shuttered[2],!!shuttered[3]],
+   memo:document.getElementById("memo").value,
+   aiIdea:document.getElementById("memoAI").textContent||"",
+   used:false
+ };
  if(editId){let i=saved.findIndex(x=>x.id===editId);if(i>=0)saved[i]={...saved[i],...data,used:saved[i].used};editId=null;persist();show("notes")}
  else{const now=Date.now();saved.push({id:now,createdAt:now,state:"SEED",used:false,...data});persist();show("slot")}
 }
@@ -442,29 +669,31 @@ function renderNotes(){
   const person=maskedValue(s.person,blind[2]);
   const word=maskedValue(s.word,blind[0]);
   const emotion=maskedValue(s.emotion,blind[1]);
+  const storyType=maskedValue(s.storyType,blind[3]);
 
   return `<div class="stock ${st==="USED"?"used":""} ${open?"open":""}" onclick="toggleStockOpen(${s.id},event)">
    <div class="stock-collapsed"><div class="pwe">
     <span class="pwe-item" style="color:var(--gold)">${escapeText(person)}</span><span class="sep">×</span>
     <span class="pwe-item" style="color:var(--cyan)">${escapeText(word)}</span><span class="sep">×</span>
-    <span class="pwe-item" style="color:var(--pink)">${escapeText(emotion)}</span>
-   </div><span class="stock-state ${st.toLowerCase()}">${st==="USED"?"✓ USED":st}</span>${date?`<span class="stock-date">${date}</span>`:""}${s.storyType?`<span class="stock-date" style="color:#7d7137">${escapeText(s.storyType)}</span>`:""}</div>
+    <span class="pwe-item" style="color:var(--pink)">${escapeText(emotion)}</span><span class="sep">×</span>
+    <span class="pwe-item" style="color:#c7a8ff">${escapeText(storyType)}</span>
+   </div><span class="stock-state ${st.toLowerCase()}">${st==="USED"?"✓ USED":st}</span>${date?`<span class="stock-date">${date}</span>`:""}</div>
    <div class="stock-expanded">
-    ${s.storyType?`<div class="stockmemo"><div class="stocklabel" style="color:#8f7d2f">STORY TYPE</div>${escapeHTML(s.storyType)}</div>`:""}
-    ${!blind[0]&&s.meaning?`<div class="stockmemo"><div class="stocklabel">WORD MEMO</div>${escapeHTML(s.meaning)}</div>`:""}
+    
+    ${!blind[0]&&s.meaning?`<div class="stockmemo"><div class="stocklabel">WORD MEANING</div>${escapeHTML(s.meaning)}</div>`:""}${!blind[0]&&s.wordMemo?`<div class="stockmemo"><div class="stocklabel">WORD MEMO</div>${escapeHTML(s.wordMemo)}</div>`:""}
     ${!blind[2]&&s.personMemo?`<div class="stockmemo"><div class="stocklabel">PERSON MEMO</div>${escapeHTML(s.personMemo)}</div>`:""}
     ${!blind[1]&&s.emotionMemo?`<div class="stockmemo"><div class="stocklabel">EMOTION MEMO</div>${escapeHTML(s.emotionMemo)}</div>`:""}
-    ${s.memo?`<div class="stockmemo"><div class="stocklabel">MEMO</div>${escapeHTML(s.memo)}</div>`:""}
+    ${!blind[3]&&s.storyTypeMemo?`<div class="stockmemo"><div class="stocklabel">STORY TYPE MEMO</div>${escapeHTML(s.storyTypeMemo)}</div>`:""}${s.memo?`<div class="stockmemo"><div class="stocklabel">MEMO</div>${escapeHTML(s.memo)}</div>`:""}
     <div class="actions"><button class="load" onclick="loadStock(${s.id})">LOAD</button><button onclick="editStock(${s.id})">EDIT</button><button id="cp${s.id}" onclick="copyStock(${s.id})">COPY</button><button class="${st==="USED"?"usedon":""}" onclick="cycleState(${s.id})">${st} → ${st==="SEED"?"GROW":st==="GROW"?"USED":"SEED"}</button><button onclick="del(${s.id})">✕</button></div>
    </div></div>`
  }).join("")
 }
 function loadStock(id){
  const s=saved.find(x=>x.id===id);if(!s)return;let w=words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""};
- slots=[w,s.emotion,s.person];held=[true,true,true];storyTypeNow=s.storyType||"";const stEl=document.getElementById("storyTypeValue");if(stEl)stEl.textContent=storyTypeNow||"—";shuttered=stockBlindArray(s).slice();aiIdea=s.aiIdea||"";keptIdea=aiIdea;previousIdeas=aiIdea?[aiIdea]:[];plotOpen=!!aiIdea;show("slot")
+ slots=[w,s.emotion,s.person];held=[true,true,true,true];storyTypeNow=s.storyType||"";const stEl=document.getElementById("storyTypeValue");if(stEl)stEl.textContent=storyTypeNow||"—";shuttered=stockBlindArray(s).slice();aiIdea=s.aiIdea||"";keptIdea=aiIdea;previousIdeas=aiIdea?[aiIdea]:[];plotOpen=!!aiIdea;show("slot")
 }
 function editStock(id){
- const s=saved.find(x=>x.id===id);if(!s)return;editId=id;slots=[words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""},s.emotion,s.person];storyTypeNow=s.storyType||"";const stEl=document.getElementById("storyTypeValue");if(stEl)stEl.textContent=storyTypeNow||"—";shuttered=stockBlindArray(s).slice();fillMemo(s.memo,s.aiIdea);show("memo")
+ const s=saved.find(x=>x.id===id);if(!s)return;editId=id;slots=[words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""},s.emotion,s.person,s.storyType||""];storyTypeNow=s.storyType||"";const stEl=document.getElementById("storyTypeValue");if(stEl)stEl.textContent=storyTypeNow||"—";shuttered=stockBlindArray(s).slice();fillMemo(s.memo,s.aiIdea);show("memo")
 }
 function toggleUsed(id){let s=saved.find(x=>x.id===id);if(s){s.used=!s.used;openStockId=id;persist();renderNotes()}}
 function del(id){
@@ -485,14 +714,14 @@ function copyAllStocks(){
  const stateOf=s=>s.state||(s.used?"USED":"SEED");
  const allText=saved.map((s,i)=>{
    const b=stockBlindArray(s),lines=[];
-   lines.push(`#${i+1} ${maskedValue(s.person,b[2])} × ${maskedValue(s.word,b[0])} × ${maskedValue(s.emotion,b[1])}`);
+   lines.push(`#${i+1} ${maskedValue(s.person,b[2])} × ${maskedValue(s.word,b[0])} × ${maskedValue(s.emotion,b[1])} × ${maskedValue(s.storyType,b[3])}`);
    lines.push(`STATE: ${stateOf(s)}`);
    const date=formatStockDate(s.createdAt||s.id);
    if(date) lines.push(`DATE: ${date}`);
-   if(s.storyType) lines.push(`STORY TYPE: ${s.storyType}`);
+   
    if(!b[2]&&s.personMemo) lines.push(`PERSON MEMO: ${s.personMemo}`);
-   if(!b[0]&&s.meaning) lines.push(`WORD MEMO: ${s.meaning}`);
-   if(!b[1]&&s.emotionMemo) lines.push(`EMOTION MEMO: ${s.emotionMemo}`);
+   if(!b[0]&&s.meaning) lines.push(`WORD MEANING: ${s.meaning}`);if(!b[0]&&s.wordMemo) lines.push(`WORD MEMO: ${s.wordMemo}`);
+   if(!b[1]&&s.emotionMemo) lines.push(`EMOTION MEMO: ${s.emotionMemo}`);if(!b[3]&&s.storyTypeMemo) lines.push(`STORY TYPE MEMO: ${s.storyTypeMemo}`);
    if(s.memo) lines.push(`MEMO:\n${s.memo}`);
    return lines.join("\n");
  }).join("\n\n--------------------\n\n");
@@ -527,11 +756,11 @@ function clearAll(){
 function copyStock(id){
  const s=saved.find(x=>x.id===id);if(!s)return;
  const b=stockBlindArray(s);
- let t=`${maskedValue(s.person,b[2])} × ${maskedValue(s.word,b[0])} × ${maskedValue(s.emotion,b[1])}`;
- if(s.storyType)t+=`\nSTORY TYPE：${s.storyType}`;
+ let t=`${maskedValue(s.person,b[2])} × ${maskedValue(s.word,b[0])} × ${maskedValue(s.emotion,b[1])} × ${maskedValue(s.storyType,b[3])}`;
+ 
  if(!b[2]&&s.personMemo)t+=`\n${s.person}：${s.personMemo}`;
- if(!b[0]&&s.meaning)t+=`\n${s.word}：${s.meaning}`;
- if(!b[1]&&s.emotionMemo)t+=`\n${s.emotion}：${s.emotionMemo}`;
+ if(!b[0]&&s.meaning)t+=`\n${s.word}：${s.meaning}`;if(!b[0]&&s.wordMemo)t+=`\nWORD MEMO：${s.wordMemo}`;
+ if(!b[1]&&s.emotionMemo)t+=`\n${s.emotion}：${s.emotionMemo}`;if(!b[3]&&s.storyTypeMemo)t+=`\n${s.storyType}：${s.storyTypeMemo}`;
  if(s.memo)t+=`\n\nMEMO\n${s.memo}`;
  navigator.clipboard.writeText(t).then(()=>{let btn=document.getElementById("cp"+id);if(btn){btn.textContent="COPIED";setTimeout(()=>btn.textContent="COPY",1200)}})
 }
@@ -541,28 +770,14 @@ function showAssist(label,main,sub=""){const b=document.getElementById("ideaAssi
 function clearAssist(){wildcardNow="";shiftNow="";const b=document.getElementById("ideaAssist");if(b){b.classList.remove("show");b.innerHTML=""}}
 function addWildcard(){if(!slots.every(Boolean)||busy)return;wildcardNow=randomDifferent(WILDCARDS,wildcardNow);showAssist("＋1 / INTRUDER",wildcardNow,"今の3語に、これだけ追加して考える")}
 function shiftView(){if(!slots.every(Boolean)||busy)return;shiftNow=randomDifferent(SHIFT_VIEWS,shiftNow);showAssist("SHIFT / VIEWPOINT",shiftNow,"3語はそのまま。見る角度だけ変える")}
-function revisitSeed(){const c=saved.filter(s=>(s.state||(s.used?"USED":"SEED"))!=="USED");if(!c.length){showAssist("REVISIT","再会できる未使用STOCKがありません","SEED / GROWを保存すると、ここに戻ってきます");return}const s=c[Math.floor(Math.random()*c.length)],b=stockBlindArray(s);showAssist("REVISIT",`${maskedValue(s.person,b[2])} × ${maskedValue(s.word,b[0])} × ${maskedValue(s.emotion,b[1])}`,formatStockDate(s.createdAt||s.id)+" の種")}
+function revisitSeed(){const c=saved.filter(s=>(s.state||(s.used?"USED":"SEED"))!=="USED");if(!c.length){showAssist("REVISIT","再会できる未使用STOCKがありません","SEED / GROWを保存すると、ここに戻ってきます");return}const s=c[Math.floor(Math.random()*c.length)],b=stockBlindArray(s);showAssist("REVISIT",`${maskedValue(s.person,b[2])} × ${maskedValue(s.word,b[0])} × ${maskedValue(s.emotion,b[1])} × ${maskedValue(s.storyType,b[3])}`,formatStockDate(s.createdAt||s.id)+" の種")}
 function cycleState(id){const s=saved.find(x=>x.id===id);if(!s)return;const c=s.state||(s.used?"USED":"SEED");s.state=c==="SEED"?"GROW":c==="GROW"?"USED":"SEED";s.used=s.state==="USED";openStockId=id;persist();renderNotes()}
 function setStockFilter(v){stockFilter=v;renderNotes()}
 
 function spinStoryType(){
-  const el=document.getElementById("storyTypeValue");
-  if(!el)return;
-  const pool=STORY_TYPES.filter(x=>x!==storyTypeNow);
-  storyTypeNow=pool[Math.floor(Math.random()*pool.length)]||STORY_TYPES[0];
-
-  let ticks=0;
-  const timer=setInterval(()=>{
-    const temp=STORY_TYPES[Math.floor(Math.random()*STORY_TYPES.length)];
-    el.textContent=temp;
-    el.style.opacity=.55;
-    ticks++;
-    if(ticks>=10){
-      clearInterval(timer);
-      el.textContent=storyTypeNow;
-      el.style.opacity=1;
-    }
-  },55);
+ storyTypeNow=pick(STORY_TYPES,storyTypeNow);
+ slots[3]=storyTypeNow;
+ render();
 }
 
 function show(name){
