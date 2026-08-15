@@ -1,0 +1,8 @@
+{
+  "name": "IDEA SLOT",
+  "short_name": "IDEA SLOT",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#08080f",
+  "theme_color": "#08080f"
+}

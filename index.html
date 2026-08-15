@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#08080f">
+<link rel="manifest" href="./manifest.json">
+<title>IDEA SLOT</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#08080f;--surface:#12121f;--border:#1e1e30;--cyan:#00e5ff;--pink:#ff6b9d;--gold:#ffd93d;--purple:#7c4dff;--green:#4ade80;--text:#e2e2ea}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif}
+body{padding:env(safe-area-inset-top) 20px env(safe-area-inset-bottom);max-width:480px;margin:auto;min-height:100dvh}
+button,textarea,input{font:inherit}button{cursor:pointer}
+.screen{display:none;min-height:100dvh;flex-direction:column}.screen.active{display:flex}
+.header{text-align:center;padding-top:14px}.header h1{font-size:14px;letter-spacing:6px;color:#444;margin:0}
+.slots{display:flex;gap:10px;margin:24px 0 10px}.slot{flex:1;min-width:0;text-align:center}.label{font-size:10px;font-weight:800;letter-spacing:2px;opacity:.7;margin-bottom:6px}
+.box{height:90px;border:2px solid;border-radius:12px;background:var(--surface);display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden}
+.val{font-size:24px;font-weight:900;line-height:1.15}.hold{margin-top:6px;padding:4px 9px;border-radius:6px;border:1px solid #252535;background:transparent;color:#444;font-size:9px;font-weight:900;letter-spacing:2px}
+.meaning{min-height:34px;text-align:center;color:#00e5ff80;font-size:12px}.meaning span{display:inline-block;background:#00e5ff08;padding:8px 12px;border-radius:8px}
+.spacer{flex:1}
+.plotbtn{width:100%;padding:12px;border-radius:11px;border:1px solid #7c4dff55;background:#7c4dff12;color:#a98cff;font-weight:900;letter-spacing:3px;margin-bottom:10px}
+.ai{display:none;background:var(--surface);border:1px solid #7c4dff44;border-radius:12px;padding:14px;margin-bottom:12px}.ai.show{display:block}
+.aihead{font-size:10px;color:#8d70ff;font-weight:900;letter-spacing:2px;margin-bottom:8px}.aitext{font-size:13px;color:#aaa;line-height:1.75;white-space:pre-wrap}
+.aiactions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}.mini{padding:6px 10px;border:1px solid #2a2a3c;border-radius:7px;background:transparent;color:#777;font-size:10px;font-weight:800}.mini.on{color:var(--green);border-color:#4ade8055}
+.start{width:100%;padding:21px;border:0;border-radius:16px;background:linear-gradient(135deg,var(--purple),var(--cyan));color:#fff;font-size:22px;font-weight:900;letter-spacing:8px}
+.row{display:flex;gap:10px;margin-top:10px}.sub{flex:1;padding:14px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:#444;font-weight:800;letter-spacing:3px;position:relative}
+.badge{position:absolute;right:-6px;top:-6px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:var(--gold);color:#000;font-size:11px}
+.reset{text-align:center;margin-top:12px}.reset button{border:0;background:transparent;color:#333;font-size:10px;letter-spacing:3px}
+.custom-toggle{border:0;background:transparent;color:#345a61;font-size:9px;margin-top:5px}.custom{display:none;background:#0d0d18;border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:12px}.custom.show{display:block}
+.custom input{width:100%;margin-bottom:7px;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:#ddd}.custom button{width:100%;padding:9px;border:0;border-radius:8px;background:#00e5ff15;color:var(--cyan);font-weight:800}
+.back{border:0;background:transparent;color:#666;text-align:left;padding:16px 0}.combo{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:18px}.tag{padding:6px 12px;border-radius:8px;font-weight:800}
+.memobox{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}.memobox label{display:block;font-size:10px;color:#555;font-weight:900;letter-spacing:1px;margin-bottom:8px}
+.memobox textarea{width:100%;border:0;outline:0;resize:vertical;background:transparent;color:#ccc;font-size:14px;line-height:1.7}
+.complete{width:100%;padding:16px;border:0;border-radius:12px;background:linear-gradient(135deg,var(--purple),var(--cyan));color:#fff;font-weight:900;letter-spacing:2px}
+.noteshead{display:flex;justify-content:space-between;align-items:center;margin:14px 0 22px}.noteshead h2{margin:0}.stock{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:11px}.stock.used{opacity:.48}
+.stocktags{display:flex;gap:5px;flex-wrap:wrap;align-items:center}.stockmemo,.stockai{padding-left:24px;margin-top:9px;color:#999;font-size:13px;line-height:1.6}.stockai{color:#817b95}.stocklabel{font-size:9px;color:#555;font-weight:900;letter-spacing:1px}
+.actions{display:flex;gap:6px;flex-wrap:wrap;padding-left:24px;margin-top:11px}.actions button{padding:6px 9px;border:1px solid #29293b;border-radius:7px;background:transparent;color:#666;font-size:10px;font-weight:800}.actions .load{color:#8f72ff;border-color:#7c4dff66}.actions .usedon{color:var(--green);border-color:#4ade8055}
+.clear{width:100%;padding:10px;border:1px solid #421a1a;border-radius:8px;background:transparent;color:#ef4444;margin:12px 0 25px}
+</style>
+</head>
+<body>
+
+<section id="slotScreen" class="screen active">
+<div class="header"><h1>IDEA SLOT</h1></div>
+<div class="slots">
+  <div class="slot"><div class="label" id="lab0" style="color:var(--cyan)">WORD</div><div class="box" id="box0" style="border-color:#00e5ff40"><div class="val" id="v0">—</div></div><button class="hold" id="h0" onclick="toggleHold(0)">HOLD</button><br><button class="custom-toggle" onclick="toggleCustom()">+ WORD</button></div>
+  <div class="slot"><div class="label" id="lab1" style="color:var(--pink)">EMOTION</div><div class="box" id="box1" style="border-color:#ff6b9d40"><div class="val" id="v1">—</div></div><button class="hold" id="h1" onclick="toggleHold(1)">HOLD</button></div>
+  <div class="slot"><div class="label" id="lab2" style="color:var(--gold)">PERSON</div><div class="box" id="box2" style="border-color:#ffd93d40"><div class="val" id="v2">—</div></div><button class="hold" id="h2" onclick="toggleHold(2)">HOLD</button></div>
+</div>
+<div id="custom" class="custom"><input id="cw" placeholder="自分の単語"><input id="cm" placeholder="意味・背景メモ（任意）"><button onclick="addCustom()">ADD & HOLD</button></div>
+<div class="meaning" id="meaning"></div>
+<div class="spacer"></div>
+<button id="plotBtn" class="plotbtn" onclick="makePlot()" disabled>✦ PLOT</button>
+<div id="aiCard" class="ai"><div class="aihead">AI IDEA</div><div id="aiText" class="aitext"></div><div class="aiactions"><button id="keepBtn" class="mini" onclick="keepIdea()">☆ KEEP</button><button class="mini" onclick="makePlot()">↻ ANOTHER</button></div></div>
+<button id="startBtn" class="start" onclick="spin()">START</button>
+<div class="row"><button id="saveBtn" class="sub" onclick="openMemo()" disabled>SAVE</button><button id="noteBtn" class="sub" onclick="show('notes')">NOTE</button></div>
+<div class="reset"><button onclick="resetSlots()">RESET</button></div>
+<div id="stats" style="text-align:center;color:#181818;font-size:10px;margin-top:3px"></div>
+</section>
+
+<section id="memoScreen" class="screen">
+<button class="back" onclick="show('slot')">← スロットに戻る</button>
+<div id="combo" class="combo"></div>
+<div class="memobox"><label>MEMO</label><textarea id="memo" rows="6" placeholder="この組み合わせからアイデアを書く..."></textarea></div>
+<div id="memoAIBox" class="memobox" style="display:none"><label style="color:#7862a7">AI IDEA</label><div id="memoAI" style="font-size:13px;color:#999;line-height:1.7"></div></div>
+<button class="complete" onclick="saveMemo()">完了</button>
+</section>
+
+<section id="notesScreen" class="screen">
+<div class="noteshead"><h2>STOCK</h2><button class="back" onclick="show('slot')">← 戻る</button></div>
+<div id="stockList"></div>
+<button id="clearBtn" class="clear" onclick="clearAll()">全削除</button>
+</section>
+
+<script>
+const BASE_WORDS=[
+["凸る","突撃する・押しかける"],["沼る","ハマって抜け出せなくなる"],["死","終わり・究極の状態"],["たらこ","鱈の卵の塩漬け食品"],["運動","身体を動かすこと"],["推し","応援している人・もの"],["エモい","感情が揺さぶられる感覚"],["ガチ","本気で・マジで"],["バズる","SNSで大きく拡散される"],["詰む","行き詰まる・終わる"],["尊い","崇高で美しい存在"],["草","笑い"],["桜","春に咲く日本の花"],["重力","物体を引きつける力"],["炎上","批判が殺到すること"],["寿司","酢飯と生魚の料理"],["闇","暗い・裏の世界"],["覚醒","目覚める・能力が開花"],["量子","物質の最小単位"],["廃墟","放棄された建物"],["泡","液体の中にできる空気の球"],["メタバース","仮想空間の総称"],["生成AI","コンテンツを自動生成するAI"],["タイパ","タイムパフォーマンス"],["蛙化","好きだった相手が急に嫌になる"],["限界","これ以上進めない境界"],["匂い","鼻で感じる感覚"],["祭","神事・イベント・盛り上がり"],["借金","お金を借りること"],["変態","形が変わること・異常な状態"],["筋肉","身体を動かす組織"],["秘密","隠されていること"],["爆発","急激に膨張すること"],["納豆","大豆を発酵させた食品"],["宇宙","地球の外の空間すべて"],["ゾーン","集中が極限に達した状態"],["界隈","特定の分野・コミュニティ"],["チルい","リラックスした状態"],["ぴえん","泣きたいくらいの感情表現"],["それな","強い同意・共感"]
+].map(x=>({word:x[0],meaning:x[1]}));
+
+const EMOTIONS=["喜び","不穏","悲しみ","無感情","たいくつ","怒り","驚き","恐怖","嫉妬","感動","焦り","安心","困惑","高揚","虚無","恥ずかしさ","懐かしさ","切なさ","ワクワク","ゾクゾク","もどかしさ","罪悪感","優越感","孤独","幸福","寂しさ","後悔","期待","失望","緊張","開放感","安堵","絶望","希望","諦め","愛情","恋","執着","憧れ","嫌悪","違和感","疑い","羞恥","退屈","倦怠","興奮","熱狂","陶酔","満足","不満","羨望","憎しみ","慈しみ","哀れみ","親近感","疎外感","喪失感","達成感","無力感","解放","爽快","ほっこり","くだらなさ","笑い","気まずさ"];
+const PEOPLE=["学生","消防士","赤ちゃん","主夫","首脳","社長","漁師","宇宙飛行士","忍者","看護師","ユーチューバー","僧侶","探偵","ギャル","老人","海賊","料理人","バスガイド","泥棒","科学者","アイドル","力士","占い師","審判","ホームレス","双子","新人","女王","ロボット","幽霊","小学生","高校生","大学生","幼児","母親","父親","祖母","祖父","孫","夫","妻","恋人","元恋人","新婚夫婦","シングルマザー","教師","校長","保育士","医師","歯科医","薬剤師","介護士","警察官","裁判官","弁護士","政治家","官僚","市長","駅員","運転手","会社員","上司","部下","人事担当","営業マン","デザイナー","エンジニア","プログラマー","作家","漫画家","画家","写真家","音楽家","俳優","芸人","美容師","店員","配達員","清掃員","警備員","農家","猟師","大工","職人","研究者","転校生","留学生","観光客","迷子","患者","囚人","詐欺師","殺し屋","スパイ","勇者","魔王","宇宙人","未来人","過去の人","クローン","AI","アンドロイド","神","悪魔","天使","犬","猫","カラス","蚊","ゴキブリ","人魚","怪獣","恐竜","虫","植物"];
+const C=["#00e5ff","#ff6b9d","#ffd93d"];
+
+let custom=JSON.parse(localStorage.getItem("idea-slot:custom")||"[]");
+let saved=JSON.parse(localStorage.getItem("idea-slot:stocks")||"[]");
+let slots=[null,null,null],held=[false,false,false],busy=false,editId=null;
+let aiIdea="",keptIdea="",previousIdeas=[];
+
+const words=()=>[...BASE_WORDS,...custom];
+const persist=()=>localStorage.setItem("idea-slot:stocks",JSON.stringify(saved));
+const val=i=>i===0?(slots[0]?.word||"—"):(slots[i]||"—");
+const pick=(a,current)=>{let b=a.filter(x=>x!==current);if(!b.length)b=a;return b[Math.floor(Math.random()*b.length)]};
+const pickW=()=>{let a=words().filter(x=>x.word!==slots[0]?.word);return a[Math.floor(Math.random()*a.length)]};
+
+function render(){
+ for(let i=0;i<3;i++){
+   const v=document.getElementById("v"+i),b=document.getElementById("box"+i),h=document.getElementById("h"+i),l=document.getElementById("lab"+i);
+   v.textContent=val(i);v.style.fontSize=val(i).length>5?"18px":"24px";
+   b.style.borderColor=held[i]?C[i]:C[i]+"40";b.style.boxShadow=held[i]?`0 0 16px ${C[i]}30`:"none";
+   l.innerHTML=(held[i]?"● ":"")+["WORD","EMOTION","PERSON"][i];h.disabled=!slots[i]||busy;h.textContent=held[i]?"HELD":"HOLD";h.style.color=held[i]?C[i]:"#444";
+ }
+ document.getElementById("meaning").innerHTML=slots[0]?.meaning?`<span>${escapeText(slots[0].word)}：${escapeText(slots[0].meaning)}</span>`:"";
+ const all=held.every(Boolean);
+ const sb=document.getElementById("startBtn");sb.disabled=busy||all;sb.textContent=busy?"...":all?"ALL HELD":"START";sb.style.opacity=sb.disabled?.35:1;
+ document.getElementById("saveBtn").disabled=busy||!slots.every(Boolean);
+ document.getElementById("saveBtn").style.color=slots.every(Boolean)?"var(--purple)":"#444";
+ document.getElementById("plotBtn").disabled=busy||!slots.every(Boolean);
+ const nb=document.getElementById("noteBtn");nb.innerHTML="NOTE"+(saved.length?`<span class="badge">${saved.length}</span>`:"");nb.style.color=saved.length?"var(--gold)":"#444";
+ document.getElementById("stats").textContent=`${words().length}w · ${EMOTIONS.length}e · ${PEOPLE.length}p`;
+ renderAI();
+}
+function toggleHold(i){if(slots[i]){held[i]=!held[i];render()}}
+function invalidateAI(){aiIdea="";keptIdea="";previousIdeas=[];renderAI()}
+async function spin(){
+ if(busy||held.every(Boolean))return;busy=true;invalidateAI();render();
+ const targets=[held[0]?slots[0]:pickW(),held[1]?slots[1]:pick(EMOTIONS,slots[1]),held[2]?slots[2]:pick(PEOPLE,slots[2])];
+ const lists=[words().map(x=>x.word),EMOTIONS,PEOPLE], timers=[];
+ for(let i=0;i<3;i++)if(!held[i]){
+   let n=0;timers[i]=setInterval(()=>{document.getElementById("v"+i).textContent=lists[i][Math.floor(Math.random()*lists[i].length)];},65);
+   await wait(550);clearInterval(timers[i]);slots[i]=targets[i];render();
+ }
+ slots=targets;busy=false;render();
+}
+function wait(ms){return new Promise(r=>setTimeout(r,ms))}
+function resetSlots(){slots=[null,null,null];held=[false,false,false];invalidateAI();render()}
+function toggleCustom(){document.getElementById("custom").classList.toggle("show")}
+function addCustom(){
+ const w=document.getElementById("cw").value.trim(),m=document.getElementById("cm").value.trim();if(!w)return;
+ let obj=words().find(x=>x.word===w);if(!obj){obj={word:w,meaning:m};custom.push(obj);localStorage.setItem("idea-slot:custom",JSON.stringify(custom))}
+ slots[0]=obj;held[0]=true;document.getElementById("cw").value="";document.getElementById("cm").value="";toggleCustom();invalidateAI();render();
+}
+
+/* AI hook:
+   現在は端末内モック。GitHub Pagesに秘密APIキーは置かない。
+   後でこの関数だけ、Cloudflare Worker / Vercel Function等の安全なAPIへ差し替える。 */
+async function generatePlot(p){
+ await wait(500);
+ const patterns=[
+ `${p.person}は「${p.word}」を避けて暮らしている。ところが、それを避けるほど周囲では${p.emotion}が増えていく。原因を追ううちに、本人だけが「${p.word}」の意味を昔のまま理解していると分かる。最後に、その言葉を自分から使った瞬間、世界の見え方が反転する。`,
+ `「${p.word}」が社会インフラになった近未来。${p.person}だけが利用資格を失う。最初は${p.emotion}に支配されるが、不便な生活の中で、誰も気づかなかった別の価値を発見する。やがて人々がその人物を真似し始め、便利だった側が少数派になる。`,
+ `${p.person}が始めた商売は「${p.word}を預かります」。客は軽い気持ちで預けるが、預けた瞬間から生活からその概念そのものが消える。評判になるほど客は増える。ところがある客が返却を求めた日、店主は預かったものを思い出せない。${p.emotion}が取引の代価だったと判明する。`,
+ `ある朝、${p.person}だけが「${p.word}」を認識できなくなる。物も言葉も存在しているのに、それだけ見えない。${p.emotion}を抱えながら原因を探すと、消えたのではなく、社会全体が別の名前に置き換えていたことが分かる。最後に主人公自身の名前まで同じ仕組みで変更される。`,
+ `${p.word} × ${p.emotion} × ${p.person}。一見つながらない三つを、日常の小さな異常から始める。${p.person}が${p.word}に関する些細な選択をしたことで、周囲の人だけが${p.emotion}を示す。主人公は理由が分からない。終盤、その感情は主人公に向けられたものではなく、主人公がまだ知らない未来への反応だったと分かる。`
+ ];
+ let available=patterns.filter(x=>!previousIdeas.includes(x));if(!available.length){previousIdeas=[];available=patterns}
+ return available[Math.floor(Math.random()*available.length)];
+}
+async function makePlot(){
+ if(busy||!slots.every(Boolean))return;busy=true;document.getElementById("aiCard").classList.add("show");document.getElementById("aiText").textContent="考え中...";render();
+ try{aiIdea=await generatePlot({word:slots[0].word,meaning:slots[0].meaning||"",emotion:slots[1],person:slots[2],previousIdeas});previousIdeas.push(aiIdea)}
+ finally{busy=false;render()}
+}
+function renderAI(){
+ const card=document.getElementById("aiCard");if(!aiIdea){card.classList.remove("show");return}
+ card.classList.add("show");document.getElementById("aiText").textContent=aiIdea;
+ const k=document.getElementById("keepBtn");k.textContent=keptIdea===aiIdea?"★ KEPT":"☆ KEEP";k.classList.toggle("on",keptIdea===aiIdea);
+}
+function keepIdea(){keptIdea=keptIdea===aiIdea?"":aiIdea;renderAI()}
+
+function openMemo(){editId=null;fillMemo("",keptIdea||aiIdea);show("memo")}
+function fillMemo(text,idea){
+ const e=slots[1],ec="#ff6b9d";
+ document.getElementById("combo").innerHTML=`<span class="tag" style="background:#00e5ff15;color:#00e5ff">${escapeText(slots[0].word)}</span>×<span class="tag" style="background:${ec}20;color:${ec}">${escapeText(e)}</span>×<span class="tag" style="background:#ffd93d15;color:#ffd93d">${escapeText(slots[2])}</span>`;
+ document.getElementById("memo").value=text||"";document.getElementById("memoAIBox").style.display=idea?"block":"none";document.getElementById("memoAI").textContent=idea||"";
+}
+function saveMemo(){
+ const data={word:slots[0].word,meaning:slots[0].meaning||"",emotion:slots[1],person:slots[2],memo:document.getElementById("memo").value,aiIdea:document.getElementById("memoAI").textContent||"",used:false};
+ if(editId){let i=saved.findIndex(x=>x.id===editId);if(i>=0)saved[i]={...saved[i],...data,used:saved[i].used};editId=null;persist();show("notes")}
+ else{saved.push({id:Date.now(),...data});persist();show("slot")}
+}
+function renderNotes(){
+ const list=document.getElementById("stockList");document.getElementById("clearBtn").style.display=saved.length?"block":"none";
+ if(!saved.length){list.innerHTML='<div style="text-align:center;color:#555;padding:60px 0">まだストックがありません</div>';return}
+ list.innerHTML=saved.map((s,i)=>`<div class="stock ${s.used?"used":""}">
+ <div class="stocktags"><small style="color:#555">#${i+1}</small><span class="tag" style="background:#00e5ff15;color:#00e5ff">${escapeText(s.word)}</span>×<span class="tag" style="background:#ff6b9d15;color:#ff6b9d">${escapeText(s.emotion)}</span>×<span class="tag" style="background:#ffd93d15;color:#ffd93d">${escapeText(s.person)}</span></div>
+ ${s.memo?`<div class="stockmemo"><div class="stocklabel">MEMO</div>${escapeHTML(s.memo)}</div>`:""}
+ ${s.aiIdea?`<div class="stockai"><div class="stocklabel">AI IDEA</div>${escapeHTML(s.aiIdea)}</div>`:""}
+ <div class="actions"><button class="load" onclick="loadStock(${s.id})">LOAD</button><button onclick="editStock(${s.id})">EDIT</button><button id="cp${s.id}" onclick="copyStock(${s.id})">COPY</button><button class="${s.used?"usedon":""}" onclick="toggleUsed(${s.id})">${s.used?"✓ USED":"○ UNUSED"}</button><button onclick="del(${s.id})">✕</button></div></div>`).join("");
+}
+function loadStock(id){
+ const s=saved.find(x=>x.id===id);if(!s)return;let w=words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""};
+ slots=[w,s.emotion,s.person];held=[true,true,true];aiIdea=s.aiIdea||"";keptIdea=aiIdea;previousIdeas=aiIdea?[aiIdea]:[];show("slot")
+}
+function editStock(id){
+ const s=saved.find(x=>x.id===id);if(!s)return;editId=id;slots=[words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""},s.emotion,s.person];fillMemo(s.memo,s.aiIdea);show("memo")
+}
+function toggleUsed(id){let s=saved.find(x=>x.id===id);if(s){s.used=!s.used;persist();renderNotes()}}
+function del(id){saved=saved.filter(x=>x.id!==id);persist();renderNotes()}
+function clearAll(){if(confirm("全てのストックを削除しますか？")){saved=[];persist();renderNotes()}}
+function copyStock(id){
+ const s=saved.find(x=>x.id===id);let t=`${s.word} × ${s.emotion} × ${s.person}`;if(s.meaning)t+=`\n${s.word}：${s.meaning}`;if(s.memo)t+=`\n\nMEMO\n${s.memo}`;if(s.aiIdea)t+=`\n\nAI IDEA\n${s.aiIdea}`;
+ navigator.clipboard.writeText(t).then(()=>{let b=document.getElementById("cp"+id);b.textContent="COPIED";setTimeout(()=>b.textContent="COPY",1200)})
+}
+function show(name){
+ document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));document.getElementById(name+"Screen").classList.add("active");
+ if(name==="notes")renderNotes();if(name==="slot")render()
+}
+function escapeText(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function escapeHTML(s){return escapeText(s).replace(/\n/g,"<br>")}
+render();
+if("serviceWorker"in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
+</script>
+</body>
+</html>
