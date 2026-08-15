@@ -29,7 +29,7 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 .badge{position:absolute;right:-6px;top:-6px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:var(--gold);color:#000;font-size:11px}
 .reset{text-align:center;margin-top:12px}.reset button{border:0;background:transparent;color:#333;font-size:10px;letter-spacing:3px}
 .custom-toggle{border:0;background:transparent;color:#345a61;font-size:9px;margin-top:5px}.custom{display:none;background:#0d0d18;border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:12px}.custom.show{display:block}
-.custom input{width:100%;margin-bottom:7px;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:#ddd}.custom button{width:100%;padding:9px;border:0;border-radius:8px;background:#00e5ff15;color:var(--cyan);font-weight:800}
+.custom input{width:100%;margin-bottom:7px;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:#ddd}.custom-actions{display:flex;gap:8px}.custom-actions button{flex:1;padding:9px;border-radius:8px;font-weight:800}.custom button{width:100%;padding:9px;border:0;border-radius:8px;background:#00e5ff15;color:var(--cyan);font-weight:800}
 .back{border:0;background:transparent;color:#666;text-align:left;padding:16px 0}.combo{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:18px}.tag{padding:6px 12px;border-radius:8px;font-weight:800}
 .memobox{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}.memobox label{display:block;font-size:10px;color:#555;font-weight:900;letter-spacing:1px;margin-bottom:8px}
 .memobox textarea{width:100%;border:0;outline:0;resize:vertical;background:transparent;color:#ccc;font-size:14px;line-height:1.7}
@@ -49,11 +49,11 @@ button,textarea,input{font:inherit}button{cursor:pointer}
   <div class="slot"><div class="label" id="lab0" style="color:var(--cyan)">WORD</div><div class="box" id="box0" onclick="toggleShutter(0)" style="border-color:#00e5ff40"><div class="val" id="v0">—</div></div><button class="hold" id="h0" onclick="toggleHold(0)">HOLD</button><br><button class="custom-toggle" onclick="toggleCustom(0)">+ WORD</button></div>
   <div class="slot"><div class="label" id="lab1" style="color:var(--pink)">EMOTION</div><div class="box" id="box1" onclick="toggleShutter(1)" style="border-color:#ff6b9d40"><div class="val" id="v1">—</div></div><button class="hold" id="h1" onclick="toggleHold(1)">HOLD</button><br><button class="custom-toggle" onclick="toggleCustom(1)">+ EMOTION</button></div>
 </div>
-<div id="custom" class="custom"><input id="cw" placeholder="追加する内容"><input id="cm" placeholder="意味・背景メモ（任意）"><button id="customAddBtn" onclick="addCustom()">ADD & HOLD</button></div>
+<div id="custom" class="custom"><input id="cw" placeholder="追加する内容"><input id="cm" placeholder="意味・背景メモ（任意）"><div class="custom-actions"><button id="customAddBtn" onclick="addCustom()">ADD & HOLD</button><button onclick="closeCustom()" style="background:transparent;color:#666;border:1px solid #2a2a35">CANCEL</button></div></div>
 <div class="meaning" id="meaning"></div>
 <div class="spacer"></div>
 <button id="plotBtn" class="plotbtn" onclick="makePlot()" disabled>✦ PLOT</button>
-<div id="aiCard" class="ai"><div class="aihead">AI IDEA</div><div id="aiText" class="aitext"></div><div class="aiactions"><button id="keepBtn" class="mini" onclick="keepIdea()">☆ KEEP</button><button class="mini" onclick="makePlot()">↻ ANOTHER</button></div></div>
+<div id="aiCard" class="ai"><div class="aihead">AI IDEA</div><div id="aiText" class="aitext"></div><div class="aiactions"><button id="keepBtn" class="mini" onclick="keepIdea()">☆ KEEP</button><button class="mini" onclick="makePlot(true)">↻ ANOTHER</button></div></div>
 <button id="startBtn" class="start" onclick="spin()">START</button>
 <div class="row"><button id="saveBtn" class="sub" onclick="openMemo()" disabled>SAVE</button><button id="noteBtn" class="sub" onclick="show('notes')">NOTE</button></div>
 <div class="reset"><button onclick="resetSlots()">RESET</button></div>
@@ -89,7 +89,7 @@ let customPeople=JSON.parse(localStorage.getItem("idea-slot:custom-people")||"[]
 let customType=0;
 let saved=JSON.parse(localStorage.getItem("idea-slot:stocks")||"[]");
 let slots=[null,null,null],held=[false,false,false],shuttered=[false,false,false],busy=false,editId=null;
-let aiIdea="",keptIdea="",previousIdeas=[];
+let aiIdea="",keptIdea="",previousIdeas=[],plotOpen=false;
 
 const words=()=>[...BASE_WORDS,...custom];
 const emotions=()=>[...EMOTIONS,...customEmotions.map(x=>x.value)];
@@ -119,7 +119,7 @@ function render(){
 }
 function toggleHold(i){if(slots[i]){held[i]=!held[i];render()}}
 function toggleShutter(i){if(slots[i]&&!busy){shuttered[i]=!shuttered[i];render()}}
-function invalidateAI(){aiIdea="";keptIdea="";previousIdeas=[];renderAI()}
+function invalidateAI(){aiIdea="";keptIdea="";previousIdeas=[];plotOpen=false;renderAI()}
 async function spin(){
  if(busy||held.every(Boolean))return;busy=true;invalidateAI();render();
  const targets=[held[0]?slots[0]:pickW(),held[1]?slots[1]:pick(emotions(),slots[1]),held[2]?slots[2]:pick(people(),slots[2])];
@@ -142,6 +142,7 @@ function toggleCustom(type){
  document.getElementById("cw").placeholder=`自分の${names[type]}`;
  document.getElementById("cm").placeholder="意味・背景メモ（任意）";
 }
+function closeCustom(){document.getElementById("custom").classList.remove("show")}
 function addCustom(){
  const v=document.getElementById("cw").value.trim(),m=document.getElementById("cm").value.trim();if(!v)return;
  if(customType===0){
@@ -154,7 +155,7 @@ function addCustom(){
    if(!customPeople.some(x=>x.value===v)){customPeople.push({value:v,memo:m});localStorage.setItem("idea-slot:custom-people",JSON.stringify(customPeople))}
    slots[2]=v;held[2]=true;
  }
- document.getElementById("cw").value="";document.getElementById("cm").value="";document.getElementById("custom").classList.remove("show");invalidateAI();render();
+ document.getElementById("cw").value="";document.getElementById("cm").value="";closeCustom();invalidateAI();render();
 }
 
 /* AI hook:
@@ -219,13 +220,42 @@ ${v.payoff}
 【最後】
 ${v.ending}`;
 }
-async function makePlot(){
- if(busy||!slots.every(Boolean))return;busy=true;document.getElementById("aiCard").classList.add("show");document.getElementById("aiText").textContent="考え中...";render();
- try{aiIdea=await generatePlot({word:slots[0].word,meaning:slots[0].meaning||"",emotion:slots[1],emotionMemo:slotMemo(1),person:slots[2],personMemo:slotMemo(2),previousIdeas});previousIdeas.push(aiIdea)}
- finally{busy=false;render()}
+async function makePlot(forceAnother=false){
+ if(busy||!slots.every(Boolean))return;
+
+ // PLOT button: show/hide existing plot
+ if(!forceAnother && aiIdea){
+   plotOpen=!plotOpen;
+   renderAI();
+   return;
+ }
+
+ busy=true;
+ plotOpen=true;
+ document.getElementById("aiCard").classList.add("show");
+ document.getElementById("aiText").textContent="考え中...";
+ render();
+
+ try{
+   aiIdea=await generatePlot({
+     word:slots[0].word,
+     meaning:slots[0].meaning||"",
+     wordNote:slots[0]?.meaning||"",
+     emotion:slots[1],
+     emotionNote:slotMemo(1)||"",
+     person:slots[2],
+     personNote:slotMemo(2)||"",
+     previousIdeas
+   });
+   previousIdeas.push(aiIdea);
+ }finally{
+   busy=false;
+   plotOpen=true;
+   render();
+ }
 }
 function renderAI(){
- const card=document.getElementById("aiCard");if(!aiIdea){card.classList.remove("show");return}
+ const card=document.getElementById("aiCard");if(!aiIdea||!plotOpen){card.classList.remove("show");return}
  card.classList.add("show");document.getElementById("aiText").textContent=aiIdea;
  const k=document.getElementById("keepBtn");k.textContent=keptIdea===aiIdea?"★ KEPT":"☆ KEEP";k.classList.toggle("on",keptIdea===aiIdea);
 }
@@ -253,7 +283,7 @@ function renderNotes(){
 }
 function loadStock(id){
  const s=saved.find(x=>x.id===id);if(!s)return;let w=words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""};
- slots=[w,s.emotion,s.person];held=[true,true,true];shuttered=[false,false,false];aiIdea=s.aiIdea||"";keptIdea=aiIdea;previousIdeas=aiIdea?[aiIdea]:[];show("slot")
+ slots=[w,s.emotion,s.person];held=[true,true,true];shuttered=[false,false,false];aiIdea=s.aiIdea||"";keptIdea=aiIdea;previousIdeas=aiIdea?[aiIdea]:[];plotOpen=!!aiIdea;show("slot")
 }
 function editStock(id){
  const s=saved.find(x=>x.id===id);if(!s)return;editId=id;slots=[words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""},s.emotion,s.person];fillMemo(s.memo,s.aiIdea);show("memo")
