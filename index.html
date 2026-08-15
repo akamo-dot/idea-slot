@@ -199,13 +199,35 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 /* v29: reel tap = HOLD / button = BLIND */
 .box{cursor:pointer}
 .hold{letter-spacing:1.5px}
+
+/* v30: keep START position fixed even when WORD meaning is hidden */
+.meaning{
+  height:42px!important;
+  min-height:42px!important;
+  max-height:42px!important;
+  margin-bottom:12px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  overflow:hidden!important;
+  flex:none!important;
+}
+.meaning span{
+  display:block;
+  width:100%;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
 </style>
 </head>
 <body>
 
 <section id="slotScreen" class="screen active">
 <div class="header"><h1>IDEA SLOT</h1>
-<div class="top-version">VER v29</div></div>
+<div class="top-version">VER v30</div></div>
 <div class="slots">
   <div class="slot">
     <div class="label" id="lab2" style="color:var(--gold)">PERSON</div>
