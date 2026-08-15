@@ -17,7 +17,7 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 .header{text-align:center;padding-top:14px}.header h1{font-size:14px;letter-spacing:6px;color:#444;margin:0}
 .slots{display:flex;gap:10px;margin:24px 0 10px}.slot{flex:1;min-width:0;text-align:center}.label{font-size:10px;font-weight:800;letter-spacing:2px;opacity:.7;margin-bottom:6px}
 .box{height:90px;border:2px solid;border-radius:12px;background:var(--surface);display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden;position:relative;cursor:pointer;transition:.25s}.box.shuttered:after{content:"";position:absolute;z-index:5;inset:-3px;background:#202027;transform:translateY(0);animation:shutter .18s ease-out;border-radius:12px}.box.shuttered:before{content:"";position:absolute;z-index:6;left:-3px;right:-3px;top:50%;height:2px;background:#2b2b33;box-shadow:0 -22px 0 #2b2b33,0 22px 0 #2b2b33}@keyframes shutter{from{transform:translateY(-105%)}to{transform:translateY(0)}}to{transform:translateY(0)}}
-.val{font-size:24px;font-weight:900;line-height:1.15}.hold{margin-top:6px;padding:4px 9px;border-radius:6px;border:1px solid #252535;background:transparent;color:#444;font-size:9px;font-weight:900;letter-spacing:2px}
+.val{font-size:24px;font-weight:900;line-height:1.15}.hold{margin-top:8px;width:100%;min-height:38px;padding:9px 6px;border-radius:9px;border:1px solid #2d2d3d;background:#11111b;color:#666;font-size:12px;font-weight:900;letter-spacing:2px;transition:.2s}
 .meaning{min-height:34px;text-align:center;color:#00e5ff80;font-size:12px}.meaning span{display:inline-block;background:#00e5ff08;padding:8px 12px;border-radius:8px}
 .spacer{flex:1}.control-fixed{flex:none}.plotbtn{flex:none;margin-top:14px}
 .plotbtn{width:100%;padding:12px;border-radius:11px;border:1px solid #7c4dff55;background:#7c4dff12;color:#a98cff;font-size:16px;font-weight:900;letter-spacing:3px;margin-top:14px;margin-bottom:10px}
@@ -57,6 +57,20 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 .idea-assist.show{display:block}.idea-assist-label{font-size:9px;font-weight:900;letter-spacing:2px;color:#555;margin-bottom:5px}.idea-assist-main{font-size:17px;font-weight:850;color:#eee}.idea-assist-sub{font-size:11px;color:#666;margin-top:4px}
 .stock-state{font-size:9px;font-weight:900;letter-spacing:.5px;white-space:nowrap}.stock-state.seed{color:#777}.stock-state.grow{color:#ffd93d}.stock-state.used{color:#4ade80}
 .filterbar{display:flex;gap:6px;margin-bottom:14px}.filterbar button{flex:1;padding:8px 3px;border:1px solid #222233;border-radius:8px;color:#555;font-size:9px;font-weight:900}.filterbar button.active{border-color:#555;color:#bbb;background:#151520}
+
+.hold.is-held{background:rgba(255,255,255,.04);box-shadow:0 0 12px rgba(255,255,255,.04)}
+.story-type-wrap{margin-top:16px;padding:14px;border:1px solid #222235;border-radius:12px;background:#0d0d17}
+.story-type-label{font-size:10px;font-weight:900;letter-spacing:2px;color:#666;margin-bottom:8px}
+.story-type-value{min-height:44px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#f0f0f5;letter-spacing:1px}
+.story-type-btn{width:100%;margin-top:10px;padding:12px;border-radius:10px;border:1px solid #ffd93d44;background:#ffd93d0d;color:#ffd93d;font-size:12px;font-weight:900;letter-spacing:2px}
+.story-type-btn:active{transform:scale(.99)}
+
+
+.note-bottom-actions{display:flex;gap:10px;margin:12px 0 25px}
+.note-bottom-actions .clear{flex:1;margin:0}
+.copy-all{flex:1;padding:10px;border:1px solid #2f2f48;border-radius:8px;background:transparent;color:#8f72ff;font-size:13px;font-weight:800;letter-spacing:1px}
+.copy-all.copied{color:#4ade80;border-color:#4ade8055}
+
 </style>
 </head>
 <body>
@@ -83,6 +97,13 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 </div>
 <div id="ideaAssist" class="idea-assist"></div>
 
+<div class="story-type-wrap">
+  <div class="story-type-label">STORY TYPE</div>
+  <div id="storyTypeValue" class="story-type-value">—</div>
+  <button class="story-type-btn" onclick="spinStoryType()">ROULETTE</button>
+</div>
+
+
 <!-- PLOTは操作ボタンの下。開閉してもSTART位置は動かない -->
 <div class="spacer"></div>
 <div class="reset"><button onclick="resetSlots()">RESET</button></div>
@@ -100,7 +121,10 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 <section id="notesScreen" class="screen">
 <div class="noteshead"><h2>STOCK</h2><button class="back" onclick="show('slot')">← 戻る</button></div>
 <div id="stockList"></div>
-<button id="clearBtn" class="clear" onclick="clearAll()">全削除</button>
+<div class="note-bottom-actions">
+  <button id="copyAllBtn" class="copy-all" onclick="copyAllStocks()">全コピー</button>
+  <button id="clearBtn" class="clear" onclick="clearAll()">全削除</button>
+</div>
 </section>
 
 <script>
@@ -117,6 +141,15 @@ let customEmotions=JSON.parse(localStorage.getItem("idea-slot:custom-emotions")|
 let customPeople=JSON.parse(localStorage.getItem("idea-slot:custom-people")||"[]");
 let customType=0;
 let saved=JSON.parse(localStorage.getItem("idea-slot:stocks")||"[]").map(s=>({...s,createdAt:s.createdAt||s.id||null,used:!!s.used,state:s.state||(s.used?"USED":"SEED")}));
+
+
+const STORY_TYPES=[
+  "不穏","喪失","幸福","笑い","恋愛","ミステリー","犯罪","家族",
+  "食","身体","仕事","宇宙","ナンセンス","感動","完全に変",
+  "切ない","爽快","皮肉","ほっこり","ホラー","青春","社会風刺",
+  "ブラックユーモア","冒険","日常","寓話","会話劇","一発ネタ"
+];
+let storyTypeNow="";
 
 const WILDCARDS=["宇宙","コンビニ","病院","学校","葬式","結婚式","裁判所","電車","海","月","地下","100年後","昨日","最後の日","無人島","老人ホーム","SNS","夢","祭り","会社","家族","お金","法律","ランキング","サブスク","レンタル","中古","無料","禁止","税金","保険","匂い","音","体温","名前","記憶","睡眠","食事","ゴミ","天気","鏡","写真","手紙"];
 const SHIFT_VIEWS=["過去","現在","未来","家庭","会社","社会","子どもの目","老人の目","日本","海外","宇宙","日常","制度","極端","逆の立場","犯罪","恋愛","仕事","商売","教育","身体","死後","100年後","誰にも知られない場所","全員が知っている世界"];
@@ -155,7 +188,7 @@ function render(){
    const v=document.getElementById("v"+i),b=document.getElementById("box"+i),h=document.getElementById("h"+i),l=document.getElementById("lab"+i);
    v.textContent=val(i);v.style.fontSize=val(i).length>5?"18px":"24px";
    b.style.borderColor=held[i]?C[i]:C[i]+"40";b.style.boxShadow=held[i]?`0 0 16px ${C[i]}30`:"none";
-   l.innerHTML=(held[i]?"● ":"")+["WORD","EMOTION","PERSON"][i];h.disabled=!slots[i]||busy;h.textContent="HOLD";h.style.color=held[i]?C[i]:"#444";b.classList.toggle("shuttered",shuttered[i]);
+   l.innerHTML=(held[i]?"● ":"")+["WORD","EMOTION","PERSON"][i];h.disabled=!slots[i]||busy;h.textContent="HOLD";h.style.color=held[i]?C[i]:"#666";h.classList.toggle("is-held",held[i]);h.style.borderColor=held[i]?C[i]+"88":"#2d2d3d";b.classList.toggle("shuttered",shuttered[i]);
  }
  const notes=[];if(slotMemo(2))notes.push(`PERSON：${escapeText(slotMemo(2))}`);if(slotMemo(0))notes.push(`WORD：${escapeText(slotMemo(0))}`);if(slotMemo(1))notes.push(`EMOTION：${escapeText(slotMemo(1))}`);document.getElementById("meaning").innerHTML=notes.length?`<span>${notes.join("　/　")}</span>`:"";
  const all=held.every(Boolean);
@@ -420,6 +453,47 @@ function del(id){
  persist();
  renderNotes();
 }
+
+function copyAllStocks(){
+ if(!saved.length){
+   alert("コピーするSTOCKがありません。");
+   return;
+ }
+
+ const stateOf=s=>s.state||(s.used?"USED":"SEED");
+
+ const text=saved.map((s,i)=>{
+   const lines=[];
+   lines.push(`#${i+1} ${s.person||"—"} × ${s.word||"—"} × ${s.emotion||"—"}`);
+   lines.push(`STATE: ${stateOf(s)}`);
+
+   const date=formatStockDate(s.createdAt||s.id);
+   if(date) lines.push(`DATE: ${date}`);
+
+   if(s.meaning) lines.push(`WORD MEMO: ${s.meaning}`);
+   if(s.personNote) lines.push(`PERSON MEMO: ${s.personNote}`);
+   if(s.emotionNote) lines.push(`EMOTION MEMO: ${s.emotionNote}`);
+   if(s.memo) lines.push(`MEMO:\n${s.memo}`);
+   if(s.aiIdea) lines.push(`AI IDEA:\n${s.aiIdea}`);
+
+   return lines.join("\n");
+ }).join("\n\n--------------------\n\n");
+
+ navigator.clipboard.writeText(text).then(()=>{
+   const btn=document.getElementById("copyAllBtn");
+   if(btn){
+     btn.textContent="COPIED";
+     btn.classList.add("copied");
+     setTimeout(()=>{
+       btn.textContent="全コピー";
+       btn.classList.remove("copied");
+     },1500);
+   }
+ }).catch(()=>{
+   alert("コピーできませんでした。");
+ });
+}
+
 function clearAll(){
  if(!saved.length)return;
  const ok=confirm(
@@ -450,6 +524,27 @@ function shiftView(){if(!slots.every(Boolean)||busy)return;shiftNow=randomDiffer
 function revisitSeed(){const c=saved.filter(s=>(s.state||(s.used?"USED":"SEED"))!=="USED");if(!c.length){showAssist("REVISIT","再会できる未使用STOCKがありません","SEED / GROWを保存すると、ここに戻ってきます");return}const s=c[Math.floor(Math.random()*c.length)];showAssist("REVISIT",`${s.person||"—"} × ${s.word||"—"} × ${s.emotion||"—"}`,formatStockDate(s.createdAt||s.id)+" の種")}
 function cycleState(id){const s=saved.find(x=>x.id===id);if(!s)return;const c=s.state||(s.used?"USED":"SEED");s.state=c==="SEED"?"GROW":c==="GROW"?"USED":"SEED";s.used=s.state==="USED";openStockId=id;persist();renderNotes()}
 function setStockFilter(v){stockFilter=v;renderNotes()}
+
+function spinStoryType(){
+  const el=document.getElementById("storyTypeValue");
+  if(!el)return;
+  const pool=STORY_TYPES.filter(x=>x!==storyTypeNow);
+  storyTypeNow=pool[Math.floor(Math.random()*pool.length)]||STORY_TYPES[0];
+
+  let ticks=0;
+  const timer=setInterval(()=>{
+    const temp=STORY_TYPES[Math.floor(Math.random()*STORY_TYPES.length)];
+    el.textContent=temp;
+    el.style.opacity=.55;
+    ticks++;
+    if(ticks>=10){
+      clearInterval(timer);
+      el.textContent=storyTypeNow;
+      el.style.opacity=1;
+    }
+  },55);
+}
+
 function show(name){
  document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));document.getElementById(name+"Screen").classList.add("active");
  if(name==="notes")renderNotes();if(name==="slot")render()
