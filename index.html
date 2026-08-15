@@ -19,8 +19,8 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 .box{height:90px;border:2px solid;border-radius:12px;background:var(--surface);display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden;position:relative;cursor:pointer;transition:.25s}.box.shuttered:after{content:"";position:absolute;z-index:5;inset:-3px;background:#202027;transform:translateY(0);animation:shutter .18s ease-out;border-radius:12px}.box.shuttered:before{content:"";position:absolute;z-index:6;left:-3px;right:-3px;top:50%;height:2px;background:#2b2b33;box-shadow:0 -22px 0 #2b2b33,0 22px 0 #2b2b33}@keyframes shutter{from{transform:translateY(-105%)}to{transform:translateY(0)}}to{transform:translateY(0)}}
 .val{font-size:24px;font-weight:900;line-height:1.15}.hold{margin-top:6px;padding:4px 9px;border-radius:6px;border:1px solid #252535;background:transparent;color:#444;font-size:9px;font-weight:900;letter-spacing:2px}
 .meaning{min-height:34px;text-align:center;color:#00e5ff80;font-size:12px}.meaning span{display:inline-block;background:#00e5ff08;padding:8px 12px;border-radius:8px}
-.spacer{flex:1}
-.plotbtn{width:100%;padding:12px;border-radius:11px;border:1px solid #7c4dff55;background:#7c4dff12;color:#a98cff;font-size:16px;font-weight:900;letter-spacing:3px;margin-bottom:10px}
+.spacer{flex:1}.control-fixed{flex:none}.plotbtn{flex:none;margin-top:14px}
+.plotbtn{width:100%;padding:12px;border-radius:11px;border:1px solid #7c4dff55;background:#7c4dff12;color:#a98cff;font-size:16px;font-weight:900;letter-spacing:3px;margin-top:14px;margin-bottom:10px}
 .ai{display:none;background:var(--surface);border:1px solid #7c4dff44;border-radius:12px;padding:14px;margin-bottom:12px}.ai.show{display:block}
 .aihead{font-size:10px;color:#8d70ff;font-weight:900;letter-spacing:2px;margin-bottom:8px}.aitext{font-size:13px;color:#aaa;line-height:1.75;white-space:pre-wrap}
 .aiactions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}.mini{padding:6px 10px;border:1px solid #2a2a3c;border-radius:7px;background:transparent;color:#777;font-size:10px;font-weight:800}.mini.on{color:var(--green);border-color:#4ade8055}
@@ -51,11 +51,17 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 </div>
 <div id="custom" class="custom"><input id="cw" placeholder="追加する内容"><input id="cm" placeholder="意味・背景メモ（任意）"><div class="custom-actions"><button id="customAddBtn" onclick="addCustom()">ADD & HOLD</button><button onclick="closeCustom()" style="background:transparent;color:#666;border:1px solid #2a2a35">CANCEL</button></div></div>
 <div class="meaning" id="meaning"></div>
-<div class="spacer"></div>
+
+<!-- 操作ボタンは常に同じ位置 -->
+<div class="control-fixed">
+  <button id="startBtn" class="start" onclick="spin()">START</button>
+  <div class="row"><button id="saveBtn" class="sub" onclick="openMemo()" disabled>SAVE</button><button id="noteBtn" class="sub" onclick="show('notes')">NOTE</button></div>
+</div>
+
+<!-- PLOTは操作ボタンの下。開閉してもSTART位置は動かない -->
 <button id="plotBtn" class="plotbtn" onclick="makePlot()" disabled>✦ PLOT</button>
 <div id="aiCard" class="ai"><div class="aihead">AI IDEA</div><div id="aiText" class="aitext"></div><div class="aiactions"><button id="keepBtn" class="mini" onclick="keepIdea()">☆ KEEP</button><button class="mini" onclick="makePlot(true)">↻ ANOTHER</button></div></div>
-<button id="startBtn" class="start" onclick="spin()">START</button>
-<div class="row"><button id="saveBtn" class="sub" onclick="openMemo()" disabled>SAVE</button><button id="noteBtn" class="sub" onclick="show('notes')">NOTE</button></div>
+<div class="spacer"></div>
 <div class="reset"><button onclick="resetSlots()">RESET</button></div>
 <div id="stats" style="text-align:center;color:#181818;font-size:10px;margin-top:3px"></div>
 </section>
@@ -112,7 +118,7 @@ function render(){
  const sb=document.getElementById("startBtn");sb.disabled=busy||all;sb.textContent=busy?"...":all?"ALL HELD":"START";sb.style.opacity=sb.disabled?.35:1;
  document.getElementById("saveBtn").disabled=busy||!slots.every(Boolean);
  document.getElementById("saveBtn").style.color=slots.every(Boolean)?"var(--purple)":"#444";
- document.getElementById("plotBtn").disabled=busy||!slots.every(Boolean);
+ document.getElementById("plotBtn").disabled=busy||!slots.every(Boolean)||activePlotCount()===0;
  const nb=document.getElementById("noteBtn");nb.innerHTML="NOTE"+(saved.length?`<span class="badge">${saved.length}</span>`:"");nb.style.color=saved.length?"var(--gold)":"#444";
  document.getElementById("stats").textContent=`${words().length}w · ${emotions().length}e · ${people().length}p`;
  renderAI();
@@ -133,6 +139,30 @@ async function spin(){
  slots=targets;busy=false;render();
 }
 function wait(ms){return new Promise(r=>setTimeout(r,ms))}
+function buildPlotPayload(){
+  const payload={previousIdeas};
+
+  // シャッターが閉じている要素はAI IDEAへ一切渡さない
+  if(!shuttered[0]){
+    payload.word=slots[0]?.word||"";
+    payload.meaning=slots[0]?.meaning||"";
+    payload.wordNote=slots[0]?.meaning||"";
+  }
+  if(!shuttered[1]){
+    payload.emotion=slots[1]||"";
+    payload.emotionNote=slotMemo(1)||"";
+  }
+  if(!shuttered[2]){
+    payload.person=slots[2]||"";
+    payload.personNote=slotMemo(2)||"";
+  }
+
+  return payload;
+}
+
+function activePlotCount(){
+  return [0,1,2].filter(i=>slots[i] && !shuttered[i]).length;
+}
 function resetSlots(){slots=[null,null,null];held=[false,false,false];shuttered=[false,false,false];invalidateAI();render()}
 function toggleCustom(type){
  customType=type;
@@ -164,48 +194,61 @@ function addCustom(){
 async function generatePlot(p){
  await wait(500);
 
- const wordNote = p.wordNote || p.meaning || "";
- const emotionNote = p.emotionNote || "";
- const personNote = p.personNote || "";
+ const hasWord=!!p.word;
+ const hasEmotion=!!p.emotion;
+ const hasPerson=!!p.person;
+
+ // シャッターで隠された要素はp自体に存在しない。
+ // 以下は「渡された要素だけ」で組み立てる。
+ const subject = hasPerson ? p.person : "ある人物";
+ const key = hasWord ? `「${p.word}」` : "日常の小さな違和感";
+ const tone = hasEmotion ? `${p.emotion}が残る` : "意味があとから反転する";
+
+ const wordExtra = hasWord && (p.wordNote||p.meaning)
+   ? `「${p.wordNote||p.meaning}」という意味・背景を文字どおりではなく別の角度から使う。`
+   : "";
+ const emotionExtra = hasEmotion && p.emotionNote
+   ? `${p.emotionNote}という補足も、感情の理由として使う。`
+   : "";
+ const personExtra = hasPerson && p.personNote
+   ? `${p.personNote}という人物メモを、その立場や行動に反映する。`
+   : "";
 
  const variations=[
   {
-   idea:`${p.word}を、単なる言葉ではなく「社会のルール」や「身体に起きる現象」として扱う。${p.person}はそのルールの外側に置かれ、${p.emotion}が読後に残るようにする。`,
-   opening:`${p.person}の日常で、${p.word}に関する小さな異常が起きる。本人には大したことではないように見えるが、周囲の反応だけが妙に大きい。`,
-   payoff:`途中で、${p.word}の意味が最初に想像していたものとは別物だったと分かる。${wordNote ? `「${wordNote}」という意味や背景を別角度から使い、` : ""}${p.person}の立場と結びつけて、冒頭の違和感を回収する。`,
-   ending:`最後は、問題が解決したように見えた直後に、${p.emotion}の意味だけが反転して残る。`
+   idea:`${key}を、最初に思いつく意味から少しずらして物語の核にする。${hasPerson?`${subject}の立場から始め、`:""}${tone}構造にする。${wordExtra}`,
+   opening:`${subject}の日常で、${hasWord?`${key}に関する`:""}些細な異常が起きる。本人には大したことではないように見えるが、周囲との認識が少しだけ噛み合わない。`,
+   payoff:`序盤では普通に見えた出来事が、別の意味だったと分かる。${hasWord?`${key}の意味を反転させ、`:""}${hasPerson?"主人公の立場と結びつけて、":""}冒頭の違和感を回収する。${emotionExtra}${personExtra}`,
+   ending:`問題が片づいたように見えた直後、${hasEmotion?`${p.emotion}だけが別の意味で残る。`:"最初の一言の意味だけが変わって見える。"}`
   },
   {
-   idea:`${p.person}が「${p.word}」を仕事・商売・サービスとして扱う世界にする。便利さではなく、その言葉を売買できること自体の妙さを核にする。`,
-   opening:`${p.person}の店には「${p.word}、預かります」とだけ書かれている。最初の客は冗談半分で入ってくる。`,
-   payoff:`客が増えるほど、${p.word}を手放した人たちの日常が少しずつ変わる。${emotionNote ? `「${emotionNote}」という補助メモも感情の背景に使い、` : ""}やがて店主自身が、その代価を受け取っていたことが分かる。`,
-   ending:`返してほしいと言われたとき、店主はもう「${p.word}」が何だったのか説明できない。`
+   idea:`${hasWord?`${key}を売買・貸し借りできるものとして扱う。`:"人が普段は売買できないものを取引する話にする。"}${hasPerson?`${subject}をその取引の当事者にする。`:""}${tone}方向へ転がす。`,
+   opening:`${subject}の前に、妙なサービスが現れる。説明は短く、使ってみるまで何が起きるのか分からない。`,
+   payoff:`利用者が増えるほど、便利さとは別の代価が見えてくる。${hasWord?`${key}を手放すことで失っていたものが判明する。`:"取引の対象より、手放した側の変化が本当の代価だったと分かる。"}${emotionExtra}`,
+   ending:`返してほしいと言ったとき、もう元の状態には戻せないことだけが淡々と告げられる。`
   },
   {
-   idea:`${p.word}を“見える／見えない”の問題に変える。${p.person}だけがそれを認識できない、または逆に一人だけ見えてしまう設定にする。`,
-   opening:`朝、${p.person}は周囲が当然のように口にする「${p.word}」だけが分からなくなっていることに気づく。`,
-   payoff:`消えたのは言葉ではなく、人々の共通認識だったと判明する。${personNote ? `「${personNote}」という人物メモを立場の違いとして効かせ、` : ""}主人公だけが以前の意味を覚えていた理由が見えてくる。`,
-   ending:`最後に主人公自身の名前も、同じ仕組みで別の意味に置き換わる。`
+   idea:`${hasWord?`${key}を「見える／見えない」の問題に変える。`:"人によって見えている現実が違う話にする。"}${hasPerson?`${subject}だけが周囲と違う認識を持つ。`:""}${tone}ようにする。`,
+   opening:`朝、${subject}は周囲が当然のように扱っている何かを、自分だけ認識できないことに気づく。`,
+   payoff:`消えたのではなく、共通認識の方が書き換わっていたと分かる。${hasWord?`${key}がその境界線だった。`:""}${personExtra}`,
+   ending:`最後に、主人公自身も「見える側／見えない側」のどちらなのか分からなくなる。`
   },
   {
-   idea:`${p.word}を、世代や時代で意味が変わる言葉として扱う。${p.person}が古い意味を信じていることで、周囲とのズレを物語にする。`,
-   opening:`${p.person}が何気なく「${p.word}」と言う。周囲が一斉に黙る。本人だけが、なぜ空気が変わったのか分からない。`,
-   payoff:`調べるほど、同じ言葉なのに世代ごとに意味が違っていたと分かる。冒頭の会話は間違いではなく、誰も同じ意味で聞いていなかっただけだった。`,
-   ending:`最後にいちばん若い人物が「それ、もう別の意味ですよ」と言い、${p.emotion}だけが残る。`
+   idea:`${hasWord?`${key}の意味が世代や時代で変わることを使う。`:"同じものを見ても意味が違う、というズレを使う。"}${hasPerson?`${subject}だけが古い意味を信じている。`:""}${tone}話にする。`,
+   opening:`${subject}が何気なく一言を口にする。周囲が一斉に黙るが、本人には理由が分からない。`,
+   payoff:`調べるほど、誰も同じ意味でその言葉や行動を受け取っていなかったことが分かる。冒頭は間違いではなく、解釈だけがずれていた。`,
+   ending:`いちばん若い人物が、さらに別の意味を口にして終わる。`
   },
   {
-   idea:`${p.word}を、制度ではなく個人的な癖・習慣・記憶として扱う。${p.person}の小さな行動が周囲へ連鎖し、本人の意図とは別の価値を生む話にする。`,
-   opening:`${p.person}は毎日、誰にも頼まれていないのに${p.word}に関係する行動を続けている。周囲は少し呆れている。`,
-   payoff:`その行動を真似する人が少しずつ増え、本人には見えていなかった影響が広がっていく。${wordNote ? `「${wordNote}」という語の背景が、最後に別の意味で効いてくる。` : ""}`,
+   idea:`${hasWord?`${key}を制度や技術ではなく、個人的な癖・記憶として扱う。`:"小さな個人的習慣から始める。"}${hasPerson?`${subject}本人は価値を自覚していない。`:""}${tone}話にする。`,
+   opening:`${subject}は毎日、誰にも頼まれていない小さな行動を続けている。周囲は少し呆れている。`,
+   payoff:`その行動を真似する人が増え、本人には見えていなかった影響が広がる。${hasWord?`${key}は最後に最初とは違う意味を持つ。`:""}${wordExtra}`,
    ending:`本人だけは何も成し遂げたつもりがなく、いつも通り同じことを続けている。`
   }
  ];
 
- let available=variations.filter(v=>!previousIdeas.includes(JSON.stringify(v)));
- if(!available.length){
-   previousIdeas=[];
-   available=variations;
- }
+ let available=variations.filter(v=>!p.previousIdeas?.includes(JSON.stringify(v)));
+ if(!available.length) available=variations;
  const v=available[Math.floor(Math.random()*available.length)];
 
  return `【着想】
@@ -221,7 +264,7 @@ ${v.payoff}
 ${v.ending}`;
 }
 async function makePlot(forceAnother=false){
- if(busy||!slots.every(Boolean))return;
+ if(busy||!slots.every(Boolean)||activePlotCount()===0)return;
 
  // PLOT button: show/hide existing plot
  if(!forceAnother && aiIdea){
@@ -237,16 +280,7 @@ async function makePlot(forceAnother=false){
  render();
 
  try{
-   aiIdea=await generatePlot({
-     word:slots[0].word,
-     meaning:slots[0].meaning||"",
-     wordNote:slots[0]?.meaning||"",
-     emotion:slots[1],
-     emotionNote:slotMemo(1)||"",
-     person:slots[2],
-     personNote:slotMemo(2)||"",
-     previousIdeas
-   });
+   aiIdea=await generatePlot(buildPlotPayload());
    previousIdeas.push(aiIdea);
  }finally{
    busy=false;
