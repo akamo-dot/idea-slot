@@ -34,7 +34,19 @@ button,textarea,input{font:inherit}button{cursor:pointer}
 .memobox{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}.memobox label{display:block;font-size:10px;color:#555;font-weight:900;letter-spacing:1px;margin-bottom:8px}
 .memobox textarea{width:100%;border:0;outline:0;resize:vertical;background:transparent;color:#ccc;font-size:14px;line-height:1.7}
 .complete{width:100%;padding:16px;border:0;border-radius:12px;background:linear-gradient(135deg,var(--purple),var(--cyan));color:#fff;font-weight:900;letter-spacing:2px}
-.noteshead{display:flex;justify-content:space-between;align-items:center;margin:14px 0 22px}.noteshead h2{margin:0}.stock{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:11px}.stock.used{opacity:.48}
+.noteshead{display:flex;justify-content:space-between;align-items:center;margin:14px 0 22px}.noteshead h2{margin:0}.stock{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;transition:.2s;cursor:pointer}
+.stock.used{border-color:#4ade8035;background:#101913}
+.stock.used .stock-collapsed{opacity:.62}
+.stock-collapsed{display:flex;align-items:center;gap:6px;min-height:34px}
+.stock-collapsed .pwe{display:flex;gap:6px;align-items:center;flex:1;min-width:0}
+.stock-collapsed .pwe-item{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stock-collapsed .sep{color:#333;font-size:11px}
+.stock-date{font-size:9px;color:#3f3f49;white-space:nowrap;margin-left:6px}
+.stock-used-mark{font-size:9px;font-weight:900;color:var(--green);letter-spacing:.5px;white-space:nowrap}
+.stock-expanded{display:none;padding-top:10px;border-top:1px solid #1b1b28;margin-top:8px}
+.stock.open .stock-expanded{display:block}
+.stock.open .stock-collapsed{margin-bottom:2px}
+.stock.open{border-color:#2a2a3b}
 .stocktags{display:flex;gap:5px;flex-wrap:wrap;align-items:center}.stockmemo,.stockai{padding-left:24px;margin-top:9px;color:#999;font-size:13px;line-height:1.6}.stockai{color:#817b95}.stocklabel{font-size:9px;color:#555;font-weight:900;letter-spacing:1px}
 .actions{display:flex;gap:6px;flex-wrap:wrap;padding-left:24px;margin-top:11px}.actions button{padding:6px 9px;border:1px solid #29293b;border-radius:7px;background:transparent;color:#666;font-size:10px;font-weight:800}.actions .load{color:#8f72ff;border-color:#7c4dff66}.actions .usedon{color:var(--green);border-color:#4ade8055}
 .clear{width:100%;padding:10px;border:1px solid #421a1a;border-radius:8px;background:transparent;color:#ef4444;margin:12px 0 25px}
@@ -93,7 +105,7 @@ let custom=JSON.parse(localStorage.getItem("idea-slot:custom")||"[]");
 let customEmotions=JSON.parse(localStorage.getItem("idea-slot:custom-emotions")||"[]");
 let customPeople=JSON.parse(localStorage.getItem("idea-slot:custom-people")||"[]");
 let customType=0;
-let saved=JSON.parse(localStorage.getItem("idea-slot:stocks")||"[]");
+let saved=JSON.parse(localStorage.getItem("idea-slot:stocks")||"[]").map(s=>({...s,createdAt:s.createdAt||s.id||null,used:!!s.used}));
 let slots=[null,null,null],held=[false,false,false],shuttered=[false,false,false],busy=false,editId=null;
 let aiIdea="",keptIdea="",previousIdeas=[],plotOpen=false;
 
@@ -102,6 +114,23 @@ const emotions=()=>[...EMOTIONS,...customEmotions.map(x=>x.value)];
 const people=()=>[...PEOPLE,...customPeople.map(x=>x.value)];
 function slotMemo(i){if(i===0)return slots[0]?.meaning||"";if(i===1)return customEmotions.find(x=>x.value===slots[1])?.memo||"";return customPeople.find(x=>x.value===slots[2])?.memo||""}
 const persist=()=>localStorage.setItem("idea-slot:stocks",JSON.stringify(saved));
+function formatStockDate(ts){
+  if(!ts) return "";
+  const d=new Date(ts);
+  if(Number.isNaN(d.getTime())) return "";
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,"0");
+  const day=String(d.getDate()).padStart(2,"0");
+  const hh=String(d.getHours()).padStart(2,"0");
+  const mm=String(d.getMinutes()).padStart(2,"0");
+  return `${y}.${m}.${day} ${hh}:${mm}`;
+}
+let openStockId=null;
+function toggleStockOpen(id,event){
+  if(event && event.target.closest("button")) return;
+  openStockId = openStockId===id ? null : id;
+  renderNotes();
+}
 const val=i=>i===0?(slots[0]?.word||"—"):(slots[i]||"—");
 const pick=(a,current)=>{let b=a.filter(x=>x!==current);if(!b.length)b=a;return b[Math.floor(Math.random()*b.length)]};
 const pickW=()=>{let a=words().filter(x=>x.word!==slots[0]?.word);return a[Math.floor(Math.random()*a.length)]};
@@ -304,16 +333,54 @@ function fillMemo(text,idea){
 function saveMemo(){
  const data={word:slots[0].word,meaning:slots[0].meaning||"",emotion:slots[1],emotionMemo:slotMemo(1),person:slots[2],personMemo:slotMemo(2),memo:document.getElementById("memo").value,aiIdea:document.getElementById("memoAI").textContent||"",used:false};
  if(editId){let i=saved.findIndex(x=>x.id===editId);if(i>=0)saved[i]={...saved[i],...data,used:saved[i].used};editId=null;persist();show("notes")}
- else{saved.push({id:Date.now(),...data});persist();show("slot")}
+ else{const now=Date.now();saved.push({id:now,createdAt:now,...data});persist();show("slot")}
 }
 function renderNotes(){
- const list=document.getElementById("stockList");document.getElementById("clearBtn").style.display=saved.length?"block":"none";
- if(!saved.length){list.innerHTML='<div style="text-align:center;color:#555;padding:60px 0">まだストックがありません</div>';return}
- list.innerHTML=saved.map((s,i)=>`<div class="stock ${s.used?"used":""}">
- <div class="stocktags"><small style="color:#555">#${i+1}</small><span class="tag" style="background:#00e5ff15;color:#00e5ff">${escapeText(s.word)}</span>×<span class="tag" style="background:#ff6b9d15;color:#ff6b9d">${escapeText(s.emotion)}</span>×<span class="tag" style="background:#ffd93d15;color:#ffd93d">${escapeText(s.person)}</span></div>
- ${s.memo?`<div class="stockmemo"><div class="stocklabel">MEMO</div>${escapeHTML(s.memo)}</div>`:""}
- ${s.aiIdea?`<div class="stockai"><div class="stocklabel">AI IDEA</div>${escapeHTML(s.aiIdea)}</div>`:""}
- <div class="actions"><button class="load" onclick="loadStock(${s.id})">LOAD</button><button onclick="editStock(${s.id})">EDIT</button><button id="cp${s.id}" onclick="copyStock(${s.id})">COPY</button><button class="${s.used?"usedon":""}" onclick="toggleUsed(${s.id})">${s.used?"✓ USED":"○ UNUSED"}</button><button onclick="del(${s.id})">✕</button></div></div>`).join("");
+ const list=document.getElementById("stockList");
+ document.getElementById("clearBtn").style.display=saved.length?"block":"none";
+
+ if(!saved.length){
+   list.innerHTML='<div style="text-align:center;color:#555;padding:60px 0">まだストックがありません</div>';
+   return;
+ }
+
+ list.innerHTML=saved.map((s,i)=>{
+   const isOpen=openStockId===s.id;
+   const date=formatStockDate(s.createdAt||s.id);
+   const person=s.person||"—";
+   const word=s.word||"—";
+   const emotion=s.emotion||"—";
+
+   return `<div class="stock ${s.used?"used":""} ${isOpen?"open":""}" onclick="toggleStockOpen(${s.id},event)">
+     <div class="stock-collapsed">
+       <div class="pwe">
+         <span class="pwe-item" style="color:var(--gold)">${escapeText(person)}</span>
+         <span class="sep">×</span>
+         <span class="pwe-item" style="color:var(--cyan)">${escapeText(word)}</span>
+         <span class="sep">×</span>
+         <span class="pwe-item" style="color:var(--pink)">${escapeText(emotion)}</span>
+       </div>
+       ${s.used?'<span class="stock-used-mark">✓ USED</span>':""}
+       ${date?`<span class="stock-date">${date}</span>`:""}
+     </div>
+
+     <div class="stock-expanded">
+       ${s.meaning?`<div class="stockmemo"><div class="stocklabel">WORD MEMO</div>${escapeHTML(s.meaning)}</div>`:""}
+       ${s.personNote?`<div class="stockmemo"><div class="stocklabel">PERSON MEMO</div>${escapeHTML(s.personNote)}</div>`:""}
+       ${s.emotionNote?`<div class="stockmemo"><div class="stocklabel">EMOTION MEMO</div>${escapeHTML(s.emotionNote)}</div>`:""}
+       ${s.memo?`<div class="stockmemo"><div class="stocklabel">MEMO</div>${escapeHTML(s.memo)}</div>`:""}
+       ${s.aiIdea?`<div class="stockai"><div class="stocklabel">AI IDEA</div>${escapeHTML(s.aiIdea)}</div>`:""}
+
+       <div class="actions">
+         <button class="load" onclick="loadStock(${s.id})">LOAD</button>
+         <button onclick="editStock(${s.id})">EDIT</button>
+         <button id="cp${s.id}" onclick="copyStock(${s.id})">COPY</button>
+         <button class="${s.used?"usedon":""}" onclick="toggleUsed(${s.id})">${s.used?"✓ USED":"○ UNUSED"}</button>
+         <button onclick="del(${s.id})">✕</button>
+       </div>
+     </div>
+   </div>`;
+ }).join("");
 }
 function loadStock(id){
  const s=saved.find(x=>x.id===id);if(!s)return;let w=words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""};
@@ -322,8 +389,8 @@ function loadStock(id){
 function editStock(id){
  const s=saved.find(x=>x.id===id);if(!s)return;editId=id;slots=[words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""},s.emotion,s.person];fillMemo(s.memo,s.aiIdea);show("memo")
 }
-function toggleUsed(id){let s=saved.find(x=>x.id===id);if(s){s.used=!s.used;persist();renderNotes()}}
-function del(id){saved=saved.filter(x=>x.id!==id);persist();renderNotes()}
+function toggleUsed(id){let s=saved.find(x=>x.id===id);if(s){s.used=!s.used;openStockId=id;persist();renderNotes()}}
+function del(id){saved=saved.filter(x=>x.id!==id);if(openStockId===id)openStockId=null;persist();renderNotes()}
 function clearAll(){if(confirm("全てのストックを削除しますか？")){saved=[];persist();renderNotes()}}
 function copyStock(id){
  const s=saved.find(x=>x.id===id);let t=`${s.word} × ${s.emotion} × ${s.person}`;if(s.personMemo)t+=`\n${s.person}：${s.personMemo}`;if(s.meaning)t+=`\n${s.word}：${s.meaning}`;if(s.emotionMemo)t+=`\n${s.emotion}：${s.emotionMemo}`;if(s.memo)t+=`\n\nMEMO\n${s.memo}`;if(s.aiIdea)t+=`\n\nAI IDEA\n${s.aiIdea}`;
