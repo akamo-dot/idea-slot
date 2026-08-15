@@ -661,6 +661,8 @@ function renderNotes(){
  const counts={ALL:saved.length,SEED:saved.filter(s=>stateOf(s)==="SEED").length,GROW:saved.filter(s=>stateOf(s)==="GROW").length,USED:saved.filter(s=>stateOf(s)==="USED").length};
  const f=stockFilter==="ALL"?saved:saved.filter(s=>stateOf(s)===stockFilter);
  const bar=`<div class="filterbar">${["ALL","SEED","GROW","USED"].map(x=>`<button class="${stockFilter===x?"active":""}" onclick="setStockFilter('${x}')">${x} ${counts[x]}</button>`).join("")}</div>`;
+ const copyAllBtn=document.getElementById("copyAllBtn");
+ if(copyAllBtn)copyAllBtn.textContent=stockFilter==="ALL"?"全コピー":`${stockFilter} 全コピー`;
  if(!f.length){list.innerHTML=bar+`<div style="text-align:center;color:#555;padding:50px 0">${saved.length?"この状態のSTOCKはありません":"まだストックがありません"}</div>`;return}
 
  list.innerHTML=bar+f.map(s=>{
@@ -688,9 +690,9 @@ function renderNotes(){
    </div></div>`
  }).join("")
 }
-function loadStock(id){
+function loadStock(id){busy=false;
  const s=saved.find(x=>x.id===id);if(!s)return;let w=words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""};
- slots=[w,s.emotion,s.person];held=[true,true,true,true];storyTypeNow=s.storyType||"";const stEl=document.getElementById("storyTypeValue");if(stEl)stEl.textContent=storyTypeNow||"—";shuttered=stockBlindArray(s).slice();aiIdea=s.aiIdea||"";keptIdea=aiIdea;previousIdeas=aiIdea?[aiIdea]:[];plotOpen=!!aiIdea;show("slot")
+ slots=[w,s.emotion,s.person,s.storyType||""];held=[false,false,false,false];storyTypeNow=s.storyType||"";const stEl=document.getElementById("storyTypeValue");if(stEl)stEl.textContent=storyTypeNow||"—";shuttered=stockBlindArray(s).slice();aiIdea=s.aiIdea||"";keptIdea=aiIdea;previousIdeas=aiIdea?[aiIdea]:[];plotOpen=!!aiIdea;show("slot")
 }
 function editStock(id){
  const s=saved.find(x=>x.id===id);if(!s)return;editId=id;slots=[words().find(x=>x.word===s.word)||{word:s.word,meaning:s.meaning||""},s.emotion,s.person,s.storyType||""];storyTypeNow=s.storyType||"";const stEl=document.getElementById("storyTypeValue");if(stEl)stEl.textContent=storyTypeNow||"—";shuttered=stockBlindArray(s).slice();fillMemo(s.memo,s.aiIdea);show("memo")
@@ -707,12 +709,13 @@ function del(id){
 }
 
 function copyAllStocks(){
- if(!saved.length){
-   alert("コピーするSTOCKがありません。");
+ const stateOf=s=>s.state||(s.used?"USED":"SEED");
+ const targets=stockFilter==="ALL"?saved:saved.filter(s=>stateOf(s)===stockFilter);
+ if(!targets.length){
+   alert(`${stockFilter}にコピーするSTOCKがありません。`);
    return;
  }
- const stateOf=s=>s.state||(s.used?"USED":"SEED");
- const allText=saved.map((s,i)=>{
+ const allText=targets.map((s,i)=>{
    const b=stockBlindArray(s),lines=[];
    lines.push(`#${i+1} ${maskedValue(s.person,b[2])} × ${maskedValue(s.word,b[0])} × ${maskedValue(s.emotion,b[1])} × ${maskedValue(s.storyType,b[3])}`);
    lines.push(`STATE: ${stateOf(s)}`);
@@ -731,7 +734,7 @@ function copyAllStocks(){
    if(btn){
      btn.textContent="COPIED";
      btn.classList.add("copied");
-     setTimeout(()=>{btn.textContent="全コピー";btn.classList.remove("copied")},1500);
+     setTimeout(()=>{btn.textContent=stockFilter==="ALL"?"全コピー":`${stockFilter} 全コピー`;btn.classList.remove("copied")},1500);
    }
  }).catch(()=>alert("コピーできませんでした。"));
 }
